@@ -28,7 +28,7 @@ const input = $input.first().json;
 const body = input.body || {};
 const headers = input.headers || {};
 const action = String(body.action || 'get_state');
-const allowed = ['get_state', 'complete', 'start'];
+const allowed = ['get_state', 'complete', 'start', 'reset_today'];
 
 if (!allowed.includes(action)) {
   throw new Error('Unsupported Phase 1 action: ' + action);
@@ -124,3 +124,4 @@ export default workflow('rhythm-agent-router-phase-1', 'Rhythm Agent Router — 
   .to(normalizeRequest)
   .to(applyAtomicAction)
   .to(respond);
+
