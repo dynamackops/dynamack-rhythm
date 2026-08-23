@@ -3,7 +3,6 @@ import {
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY,
   RHYTHM_ACTION_URL,
-  ALLOWED_EMAIL,
 } from './config.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -203,11 +202,6 @@ async function runAction(action, chunkId = null) {
 loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const email = new FormData(loginForm).get('email').trim().toLowerCase();
-  if (email !== ALLOWED_EMAIL) {
-    authMessage.textContent = 'Rhythm Agent is currently private.';
-    return;
-  }
-
   authMessage.textContent = 'Sending your private sign-in link…';
   const { error } = await supabase.auth.signInWithOtp({
     email,
