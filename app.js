@@ -67,49 +67,6 @@ function showDashboard() {
   dashboardView.hidden = false;
 }
 
-async function initializeToday() {
-  const date = easternDate();
-  const userId = session.user.id;
-  const { data: existing, error: existingError } = await supabase
-    .from('daily_plans')
-    .select('id')
-    .eq('owner_id', userId)
-    .eq('plan_date', date)
-    .maybeSingle();
-
-  if (existingError) throw existingError;
-  if (existing) return existing.id;
-
-  const { data: template, error: templateError } = await supabase
-    .from('routine_templates')
-    .select('chunks_json')
-    .eq('is_default', true)
-    .single();
-  if (templateError) throw templateError;
-
-  const { data: plan, error: planError } = await supabase
-    .from('daily_plans')
-    .insert({ owner_id: userId, plan_date: date, energy_mode: 'normal', status: 'active' })
-    .select('id')
-    .single();
-  if (planError) throw planError;
-
-  const rows = template.chunks_json.map((chunk, index) => ({
-    owner_id: userId,
-    daily_plan_id: plan.id,
-    template_key: chunk.key,
-    title: chunk.title,
-    position: chunk.position,
-    status: index === 0 ? 'current' : index === 1 ? 'next' : 'later',
-    transition_cue: chunk.cue || null,
-    started_at: index === 0 ? new Date().toISOString() : null,
-  }));
-
-  const { error: chunksError } = await supabase.from('chunks').insert(rows);
-  if (chunksError) throw chunksError;
-  return plan.id;
-}
-
 async function callRhythm(action = 'get_state', chunkId = null) {
   const response = await fetch(RHYTHM_ACTION_URL, {
     method: 'POST',
@@ -132,7 +89,10 @@ function makeSmallChunk(chunk, context) {
   const node = smallChunkTemplate.content.cloneNode(true);
   node.querySelector('h3').textContent = chunk.title;
   const note = node.querySelector('p');
-  note.textContent = chunk.transition_cue || (context === 'next' ? 'Ready when you are.' : 'It can wait.');
+  const movementPlan = chunk.title === 'Movement' && state.movement?.optionTitle
+    ? `${state.movement.optionTitle}${state.movement.intensity ? ` · ${state.movement.intensity}` : ''}`
+    : null;
+  note.textContent = movementPlan || chunk.transition_cue || (context === 'next' ? 'Ready when you are.' : 'It can wait.');
   const button = node.querySelector('button');
   button.dataset.chunkId = chunk.id;
   button.setAttribute('aria-label', `Start ${chunk.title}`);
@@ -147,6 +107,25 @@ function renderState() {
 
   todayLabel.textContent = friendlyDate(state.date);
   energyPill.textContent = energyLabels[state.energyMode] || energyLabels.normal;
+
+  if (state.needsSetup) {
+    const setup = document.createElement('div');
+    setup.innerHTML = '<p class="chunk-kicker">A fresh start</p><h2 class="now-title">Ready?</h2><p class="transition-cue">We can make today visible without deciding everything at once.</p>';
+    const startButton = document.createElement('button');
+    startButton.className = 'complete-button';
+    startButton.type = 'button';
+    startButton.textContent = 'Start my day';
+    startButton.addEventListener('click', () => runAction('make_day'));
+    const actions = document.createElement('div');
+    actions.className = 'now-actions';
+    actions.append(startButton);
+    setup.append(actions);
+    nowContent.append(setup);
+    nextContent.innerHTML = '<p class="empty-copy">Nothing to hold in your head yet.</p>';
+    laterContent.innerHTML = '<p class="empty-copy">Later can wait.</p>';
+    progressLabel.textContent = 'Your rhythm has not started yet';
+    return;
+  }
 
   if (state.now) {
     const node = nowTemplate.content.cloneNode(true);
@@ -180,7 +159,6 @@ function renderState() {
 async function loadDashboard(message = 'Making today visible…') {
   setBusy(true, message);
   try {
-    await initializeToday();
     state = await callRhythm('get_state');
     renderState();
     dashboardMessage.textContent = '';
@@ -198,6 +176,7 @@ async function runAction(action, chunkId = null) {
     complete: 'Moving gently to what comes next…',
     start: 'Starting that chunk…',
     reset_today: 'Reopening today…',
+    make_day: 'Building a gentle shape for today…',
   };
   setBusy(true, actionMessages[action] || 'Updating your rhythm…');
   try {
