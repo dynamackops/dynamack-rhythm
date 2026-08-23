@@ -21,6 +21,8 @@ declare
   v_next_position smallint;
   v_selected_position smallint;
   v_following_id uuid;
+  v_total_count integer;
+  v_completed_count integer;
   v_now timestamptz := clock_timestamp();
   v_result jsonb;
 begin
@@ -28,7 +30,7 @@ begin
     raise exception 'A Supabase user session is required.' using errcode = '42501';
   end if;
 
-  if v_action not in ('get_state', 'complete', 'start') then
+  if v_action not in ('get_state', 'complete', 'start', 'reset_today') then
     raise exception 'Unsupported Phase 1 action: %', v_action using errcode = '22023';
   end if;
 
@@ -63,7 +65,41 @@ begin
     for update;
   end if;
 
-  if v_action = 'complete' then
+  if v_action = 'reset_today' then
+    select count(*), count(*) filter (where c.status = 'completed')
+      into v_total_count, v_completed_count
+    from public.chunks c
+    where c.daily_plan_id = v_plan_id
+      and c.owner_id = v_uid;
+
+    if v_total_count = 0 or v_completed_count <> v_total_count then
+      raise exception 'Today can only be reopened after every chunk is complete.' using errcode = '22023';
+    end if;
+
+    with ordered as (
+      select c.id, row_number() over (order by c.position) as sequence
+      from public.chunks c
+      where c.daily_plan_id = v_plan_id
+        and c.owner_id = v_uid
+    )
+    update public.chunks c
+    set status = case
+          when ordered.sequence = 1 then 'current'
+          when ordered.sequence = 2 then 'next'
+          else 'later'
+        end,
+        started_at = case when ordered.sequence = 1 then v_now else null end,
+        completed_at = null,
+        updated_at = v_now
+    from ordered
+    where c.id = ordered.id;
+
+    update public.daily_plans
+    set status = 'active',
+        updated_at = v_now
+    where id = v_plan_id
+      and owner_id = v_uid;
+  elsif v_action = 'complete' then
     select c.id
       into v_current_id
     from public.chunks c
