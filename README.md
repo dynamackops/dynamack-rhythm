@@ -20,20 +20,20 @@ Phase 1 proves the persistent dashboard-state loop without AI:
 - `index.html`, `styles.css`, and `app.js`: visual dashboard
 - Supabase project `Rhythm Agent`: `routine_templates`, `daily_plans`, and `chunks`
 - n8n workflow `Rhythm Agent Router — Phase 1`: authenticated `get_state`, `complete`, and `start` actions
-- `config.example.js`: public-safe template for private runtime settings
+- `config.js`: browser-safe runtime settings; contains no email address or secret key
+- `config.example.js`: reusable configuration template
 - `supabase/phase1_schema.sql`: reproducible Phase 1 database definition
 - `n8n/rhythm-router.ts`: validated Workflow SDK source
 
 ## Run locally
 
 ```bash
-cp config.example.js config.js
 python3 -m http.server 3000
 ```
 
-Fill in `config.js`, open [http://localhost:3000](http://localhost:3000), request your sign-in link, and return to the dashboard. `config.js` is ignored by Git and must not be committed.
+Open [http://localhost:3000](http://localhost:3000), request your sign-in link, and return to the dashboard.
 
-Supabase publishable keys are designed for frontend use, but this project still keeps all account-specific values in the ignored runtime config. Database access is protected by authenticated Row Level Security policies. Never place a Supabase secret key or service-role key in frontend code.
+Supabase publishable keys and browser endpoints are designed to appear in frontend code. Database access is protected by authenticated Row Level Security policies plus a private deployment-side email allowlist. Never place a Supabase secret key or service-role key in frontend code.
 
 ## Current scope
 
