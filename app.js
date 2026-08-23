@@ -157,6 +157,14 @@ function renderState() {
     nowContent.append(node);
   } else {
     nowContent.innerHTML = '<div><p class="chunk-kicker">Today is complete</p><h2 class="now-title">Exhale.</h2><p class="transition-cue">Nothing else needs to become overdue.</p></div>';
+    if (state.chunks.length > 0 && state.completed.length === state.chunks.length) {
+      const recoveryButton = document.createElement('button');
+      recoveryButton.className = 'recovery-button';
+      recoveryButton.type = 'button';
+      recoveryButton.textContent = 'Reopen today';
+      recoveryButton.addEventListener('click', () => runAction('reset_today'));
+      nowContent.firstElementChild.append(recoveryButton);
+    }
   }
 
   if (state.next) nextContent.append(makeSmallChunk(state.next, 'next'));
@@ -186,7 +194,12 @@ async function loadDashboard(message = 'Making today visible…') {
 
 async function runAction(action, chunkId = null) {
   if (busy) return;
-  setBusy(true, action === 'complete' ? 'Moving gently to what comes next…' : 'Starting that chunk…');
+  const actionMessages = {
+    complete: 'Moving gently to what comes next…',
+    start: 'Starting that chunk…',
+    reset_today: 'Reopening today…',
+  };
+  setBusy(true, actionMessages[action] || 'Updating your rhythm…');
   try {
     state = await callRhythm(action, chunkId);
     renderState();
