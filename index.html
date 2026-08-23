@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4eee6" />
+    <meta name="description" content="A visual daily rhythm system that makes NOW, NEXT, and LATER visible." />
+    <title>Rhythm Agent</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <main class="shell">
+      <section id="auth-view" class="auth-card" aria-labelledby="auth-title">
+        <div class="brand-mark" aria-hidden="true">R</div>
+        <p class="eyebrow">Your day, made visible</p>
+        <h1 id="auth-title">Find your rhythm.</h1>
+        <p class="auth-copy">
+          Sign in to see only what matters now, what comes next, and what can wait.
+        </p>
+        <form id="login-form" class="login-form">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+          <button class="primary-button" type="submit">Email me a sign-in link</button>
+        </form>
+        <p id="auth-message" class="message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section id="dashboard-view" class="dashboard" hidden>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Rhythm Agent</p>
+            <h1 id="today-label">Today</h1>
+          </div>
+          <div class="topbar-actions">
+            <span id="energy-pill" class="energy-pill">🟢 Normal</span>
+            <button id="refresh-button" class="quiet-button" type="button">Refresh</button>
+            <button id="signout-button" class="quiet-button" type="button">Sign out</button>
+          </div>
+        </header>
+
+        <p id="dashboard-message" class="message dashboard-message" role="status" aria-live="polite"></p>
+
+        <section class="rhythm-grid" aria-label="Today's rhythm">
+          <article class="now-panel panel">
+            <div class="panel-label"><span class="signal signal-now"></span>NOW</div>
+            <div id="now-content" class="now-content"></div>
+          </article>
+
+          <aside class="support-column">
+            <article class="next-panel panel">
+              <div class="panel-label"><span class="signal signal-next"></span>NEXT</div>
+              <div id="next-content"></div>
+            </article>
+
+            <article class="later-panel panel">
+              <div class="panel-label"><span class="signal signal-later"></span>LATER</div>
+              <div id="later-content" class="later-list"></div>
+            </article>
+          </aside>
+        </section>
+
+        <footer class="footer-note">
+          <span id="progress-label">0 of 5 chunks complete</span>
+          <span>Plans adapt. You are not behind.</span>
+        </footer>
+      </section>
+    </main>
+
+    <template id="now-template">
+      <div>
+        <p class="chunk-kicker">Stay with this</p>
+        <h2 class="now-title"></h2>
+        <p class="transition-cue"></p>
+        <div class="now-actions">
+          <button class="complete-button" type="button">Complete this chunk</button>
+        </div>
+      </div>
+    </template>
+
+    <template id="small-chunk-template">
+      <div class="small-chunk">
+        <div>
+          <h3></h3>
+          <p></p>
+        </div>
+        <button class="start-button" type="button">Start</button>
+      </div>
+    </template>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
