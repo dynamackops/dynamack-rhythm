@@ -3,4 +3,3 @@
 export const SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'YOUR_SUPABASE_PUBLISHABLE_KEY';
 export const RHYTHM_ACTION_URL = 'https://YOUR_N8N_HOST/webhook/rhythm-agent/action';
-export const ALLOWED_EMAIL = 'YOUR_PRIVATE_EMAIL';
