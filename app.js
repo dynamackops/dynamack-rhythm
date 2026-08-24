@@ -159,7 +159,7 @@ function effortForEnergy() {
 
 function renderMealButton() {
   const dinner = state?.dinnerChoice;
-  mealHelpButton.textContent = dinner ? `Dinner: ${dinner.title}` : 'What can I eat?';
+  mealHelpButton.textContent = dinner ? `🍽️ Dinner: ${dinner.title}` : '🍽️ What can I eat?';
   mealHelpButton.title = dinner?.instructions || 'Get a few small meal choices from what is available.';
 }
 
