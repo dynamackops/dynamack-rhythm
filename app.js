@@ -24,6 +24,18 @@ const authMessage = document.querySelector('#auth-message');
 const dashboardMessage = document.querySelector('#dashboard-message');
 const refreshButton = document.querySelector('#refresh-button');
 const signoutButton = document.querySelector('#signout-button');
+const closeoutButton = document.querySelector('#closeout-button');
+const transitionPrompt = document.querySelector('#transition-prompt');
+const transitionTitle = document.querySelector('#transition-title');
+const transitionMessage = document.querySelector('#transition-message');
+const promptPrimary = document.querySelector('#prompt-primary');
+const promptSnooze = document.querySelector('#prompt-snooze');
+const promptDismiss = document.querySelector('#prompt-dismiss');
+const closeoutDialog = document.querySelector('#closeout-dialog');
+const closeoutForm = document.querySelector('#closeout-form');
+const closeoutNote = document.querySelector('#closeout-note');
+const closeoutSubmit = document.querySelector('#closeout-submit');
+const closeoutCancel = document.querySelector('#closeout-cancel');
 const nowContent = document.querySelector('#now-content');
 const nextContent = document.querySelector('#next-content');
 const laterContent = document.querySelector('#later-content');
@@ -36,6 +48,7 @@ const smallChunkTemplate = document.querySelector('#small-chunk-template');
 let session = null;
 let state = null;
 let busy = false;
+let selectedMood = null;
 
 function easternDate() {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -67,7 +80,7 @@ function showDashboard() {
   dashboardView.hidden = false;
 }
 
-async function callRhythm(action = 'get_state', chunkId = null) {
+async function callRhythm(action = 'get_state', chunkId = null, extra = {}) {
   const response = await fetch(RHYTHM_ACTION_URL, {
     method: 'POST',
     headers: {
@@ -75,7 +88,7 @@ async function callRhythm(action = 'get_state', chunkId = null) {
       Authorization: `Bearer ${session.access_token}`,
       'x-supabase-key': SUPABASE_PUBLISHABLE_KEY,
     },
-    body: JSON.stringify({ action, chunkId, date: easternDate() }),
+    body: JSON.stringify({ action, chunkId, date: easternDate(), ...extra }),
   });
 
   const payload = await response.json().catch(() => null);
@@ -88,16 +101,42 @@ async function callRhythm(action = 'get_state', chunkId = null) {
 function makeSmallChunk(chunk, context) {
   const node = smallChunkTemplate.content.cloneNode(true);
   node.querySelector('h3').textContent = chunk.title;
-  const note = node.querySelector('p');
+  const time = node.querySelector('.small-time');
+  const note = node.querySelector('.small-note');
   const movementPlan = chunk.title === 'Movement' && state.movement?.optionTitle
     ? `${state.movement.optionTitle}${state.movement.intensity ? ` · ${state.movement.intensity}` : ''}`
     : null;
+  time.textContent = state.schedule?.[chunk.template_key] || '';
   note.textContent = movementPlan || chunk.transition_cue || (context === 'next' ? 'Ready when you are.' : 'It can wait.');
   const button = node.querySelector('button');
   button.dataset.chunkId = chunk.id;
   button.setAttribute('aria-label', `Start ${chunk.title}`);
   button.addEventListener('click', () => runAction('start', chunk.id));
   return node;
+}
+
+function openCloseout() {
+  selectedMood = null;
+  closeoutNote.value = '';
+  closeoutSubmit.disabled = true;
+  document.querySelectorAll('.mood-button').forEach((button) => button.classList.remove('selected'));
+  closeoutDialog.showModal();
+}
+
+function renderTransitionPrompt() {
+  const prompt = state.transitionPrompt;
+  transitionPrompt.hidden = !prompt;
+  if (!prompt) return;
+
+  transitionTitle.textContent = prompt.title;
+  transitionMessage.textContent = prompt.message;
+  promptPrimary.textContent = prompt.type === 'transition'
+    ? 'Start now'
+    : prompt.type === 'preparation'
+      ? 'Start getting ready'
+      : prompt.type === 'close_out'
+        ? 'Close out the day'
+        : 'Got it';
 }
 
 function renderState() {
@@ -107,6 +146,8 @@ function renderState() {
 
   todayLabel.textContent = friendlyDate(state.date);
   energyPill.textContent = energyLabels[state.energyMode] || energyLabels.normal;
+  closeoutButton.hidden = !state.closeOut?.available;
+  renderTransitionPrompt();
 
   if (state.needsSetup) {
     const setup = document.createElement('div');
@@ -127,9 +168,21 @@ function renderState() {
     return;
   }
 
+  if (state.closeOut?.closed) {
+    const moodLabels = { good: '😊 Good', meh: '😐 Meh', hard: '😩 Hard' };
+    const closed = document.createElement('div');
+    closed.innerHTML = `<p class="chunk-kicker">Day closed</p><h2 class="now-title">Exhale.</h2><p class="transition-cue">Today felt ${moodLabels[state.dayHistory?.mood] || 'complete'}. Nothing unfinished became overdue.</p>`;
+    nowContent.append(closed);
+    nextContent.innerHTML = '<p class="empty-copy">Tomorrow gets a fresh start.</p>';
+    laterContent.innerHTML = '<p class="empty-copy">The rest can wait.</p>';
+    progressLabel.textContent = `${state.dayHistory?.completedCount || 0} completed · ${state.dayHistory?.unfinishedCount || 0} gently released`;
+    return;
+  }
+
   if (state.now) {
     const node = nowTemplate.content.cloneNode(true);
     node.querySelector('.now-title').textContent = state.now.title;
+    node.querySelector('.chunk-time').textContent = state.schedule?.[state.now.template_key] || '';
     const cue = node.querySelector('.transition-cue');
     cue.textContent = state.now.transition_cue || 'You only need to be here right now.';
     node.querySelector('.complete-button').addEventListener('click', () => runAction('complete'));
@@ -171,7 +224,7 @@ async function loadDashboard(message = 'Making today visible…') {
   }
 }
 
-async function runAction(action, chunkId = null) {
+async function runAction(action, chunkId = null, extra = {}) {
   if (busy) return;
   const actionMessages = {
     complete: 'Moving gently to what comes next…',
@@ -179,10 +232,14 @@ async function runAction(action, chunkId = null) {
     reset_today: 'Reopening today…',
     make_day: 'Building a gentle shape for today…',
     make_easier: 'Making the smallest useful change…',
+    accept_prompt: 'Moving when you are ready…',
+    snooze_prompt: 'Giving you 15 more minutes…',
+    dismiss_prompt: 'Staying here for now…',
+    close_out: 'Closing out the day gently…',
   };
   setBusy(true, actionMessages[action] || 'Updating your rhythm…');
   try {
-    state = await callRhythm(action, chunkId);
+    state = await callRhythm(action, chunkId, extra);
     renderState();
     dashboardMessage.textContent = state.adaptation?.message || '';
   } catch (error) {
@@ -192,6 +249,36 @@ async function runAction(action, chunkId = null) {
     setBusy(false);
   }
 }
+
+promptPrimary.addEventListener('click', () => {
+  const prompt = state?.transitionPrompt;
+  if (!prompt) return;
+  if (prompt.type === 'close_out') openCloseout();
+  else runAction('accept_prompt', null, { promptId: prompt.id });
+});
+promptSnooze.addEventListener('click', () => {
+  if (state?.transitionPrompt) runAction('snooze_prompt', null, { promptId: state.transitionPrompt.id });
+});
+promptDismiss.addEventListener('click', () => {
+  if (state?.transitionPrompt) runAction('dismiss_prompt', null, { promptId: state.transitionPrompt.id });
+});
+
+closeoutButton.addEventListener('click', openCloseout);
+closeoutCancel.addEventListener('click', () => closeoutDialog.close());
+document.querySelectorAll('.mood-button').forEach((button) => {
+  button.addEventListener('click', () => {
+    selectedMood = button.dataset.mood;
+    document.querySelectorAll('.mood-button').forEach((option) => option.classList.toggle('selected', option === button));
+    closeoutSubmit.disabled = false;
+  });
+});
+closeoutForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!selectedMood) return;
+  const promptId = state?.transitionPrompt?.type === 'close_out' ? state.transitionPrompt.id : null;
+  closeoutDialog.close();
+  await runAction('close_out', null, { mood: selectedMood, note: closeoutNote.value.trim(), promptId });
+});
 
 loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -230,3 +317,7 @@ if (session) {
 } else {
   showAuth();
 }
+
+window.setInterval(() => {
+  if (session && !busy && document.visibilityState === 'visible') loadDashboard('Checking the rhythm…');
+}, 5 * 60 * 1000);
