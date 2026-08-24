@@ -88,6 +88,7 @@ if (action === 'make_day') {
     date,
     effort: typeof body.effort === 'string' ? body.effort : null,
     mealId: body.mealId || null,
+    mealSlot: typeof body.mealSlot === 'string' ? body.mealSlot : 'dinner',
     pantryItemId: body.pantryItemId || null,
   };
 }
