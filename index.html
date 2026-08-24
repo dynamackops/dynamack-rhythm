@@ -36,6 +36,8 @@
           </div>
           <div class="topbar-actions">
             <span id="energy-pill" class="energy-pill">🟢 Normal</span>
+            <button id="theme-button" class="theme-button" type="button">🎨 Theme</button>
+            <button id="lofi-button" class="lofi-button" type="button" aria-pressed="false">🎧 Lo-fi</button>
             <button id="meal-help-button" class="meal-help-button" type="button">🍽️ What can I eat?</button>
             <button id="closeout-button" class="closeout-button" type="button" hidden>Close out the day</button>
             <button id="refresh-button" class="quiet-button" type="button">Refresh</button>
@@ -90,6 +92,7 @@
         <h2 class="now-title"></h2>
         <p class="chunk-time"></p>
         <p class="transition-cue"></p>
+        <div class="routine-slot"></div>
         <div class="now-actions">
           <button class="complete-button" type="button">Complete this chunk</button>
           <button class="easier-button" type="button">Make this easier</button>
@@ -103,6 +106,7 @@
           <h3></h3>
           <p class="small-time"></p>
           <p class="small-note"></p>
+          <div class="routine-slot small-routine-slot"></div>
         </div>
         <button class="start-button" type="button">Start</button>
       </div>
@@ -125,6 +129,26 @@
           <button id="closeout-submit" class="complete-button" type="submit" disabled>Close out the day</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="theme-dialog" class="theme-dialog">
+      <div class="theme-dialog-content">
+        <div class="dialog-heading-row">
+          <div>
+            <p class="prompt-kicker">Make it yours</p>
+            <h2>Choose a color mood</h2>
+          </div>
+          <button id="theme-close" class="quiet-button" type="button" aria-label="Close theme chooser">Close</button>
+        </div>
+        <p class="theme-dialog-copy">Your choice stays here when you come back.</p>
+        <div class="theme-options" role="group" aria-label="Color theme">
+          <button class="theme-option" type="button" data-theme="blush"><span class="theme-swatch swatch-blush"></span><span>Blush</span></button>
+          <button class="theme-option" type="button" data-theme="lavender"><span class="theme-swatch swatch-lavender"></span><span>Lavender</span></button>
+          <button class="theme-option" type="button" data-theme="blue"><span class="theme-swatch swatch-blue"></span><span>Blue</span></button>
+          <button class="theme-option" type="button" data-theme="sage"><span class="theme-swatch swatch-sage"></span><span>Sage</span></button>
+          <button class="theme-option" type="button" data-theme="dark"><span class="theme-swatch swatch-dark"></span><span>Dark cave</span></button>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="meal-dialog" class="meal-dialog">
