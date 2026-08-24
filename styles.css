@@ -97,7 +97,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
 }
 .login-form input:focus { border-color: var(--rose); box-shadow: 0 0 0 4px rgba(201, 120, 120, 0.15); }
 
-.primary-button, .complete-button, .start-button, .quiet-button, .recovery-button {
+.primary-button, .complete-button, .easier-button, .start-button, .quiet-button, .recovery-button {
   border: 0;
   border-radius: 14px;
   font-weight: 800;
@@ -105,6 +105,8 @@ button:disabled { cursor: wait; opacity: 0.58; }
 }
 .primary-button, .complete-button { padding: 15px 20px; color: white; background: var(--rose-dark); }
 .primary-button:hover, .complete-button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(157, 83, 89, 0.22); }
+.easier-button { padding: 14px 18px; border: 1px solid rgba(157, 83, 89, 0.24); color: var(--rose-dark); background: rgba(255, 255, 255, 0.62); }
+.easier-button:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.9); }
 .quiet-button { padding: 10px 14px; color: var(--ink); background: rgba(255, 255, 255, 0.66); }
 .start-button { flex: 0 0 auto; padding: 9px 13px; color: var(--rose-dark); background: #f7e8e7; }
 .recovery-button { margin-top: 28px; padding: 10px 14px; border: 1px solid var(--line); color: var(--muted); background: rgba(255, 255, 255, 0.5); }
