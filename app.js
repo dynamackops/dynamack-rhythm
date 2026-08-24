@@ -24,6 +24,10 @@ const authMessage = document.querySelector('#auth-message');
 const dashboardMessage = document.querySelector('#dashboard-message');
 const refreshButton = document.querySelector('#refresh-button');
 const signoutButton = document.querySelector('#signout-button');
+const themeButton = document.querySelector('#theme-button');
+const lofiButton = document.querySelector('#lofi-button');
+const themeDialog = document.querySelector('#theme-dialog');
+const themeClose = document.querySelector('#theme-close');
 const closeoutButton = document.querySelector('#closeout-button');
 const mealHelpButton = document.querySelector('#meal-help-button');
 const mealDialog = document.querySelector('#meal-dialog');
@@ -54,6 +58,10 @@ let state = null;
 let busy = false;
 let busyCount = 0;
 let selectedMood = null;
+let audioContext = null;
+
+const savedTheme = window.localStorage.getItem('rhythm-theme');
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 
 function easternDate() {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -122,11 +130,117 @@ function makeSmallChunk(chunk, context) {
     : null;
   time.textContent = state.schedule?.[chunk.template_key] || '';
   note.textContent = movementPlan || chunk.transition_cue || (context === 'next' ? 'Ready when you are.' : 'It can wait.');
+  renderRoutine(node.querySelector('.routine-slot'), chunk.template_key, true);
   const button = node.querySelector('button');
   button.dataset.chunkId = chunk.id;
   button.setAttribute('aria-label', `Start ${chunk.title}`);
   button.addEventListener('click', () => runAction('start', chunk.id));
   return node;
+}
+
+function applyTheme(theme = 'blush') {
+  document.documentElement.dataset.theme = theme;
+  window.localStorage.setItem('rhythm-theme', theme);
+  document.querySelectorAll('.theme-option').forEach((button) => {
+    button.classList.toggle('selected', button.dataset.theme === theme);
+  });
+}
+
+function renderRoutine(container, chunkKey, compact = false) {
+  if (!container) return;
+  container.replaceChildren();
+  const steps = Array.isArray(state?.routineSteps)
+    ? state.routineSteps.filter((step) => step.chunkKey === chunkKey)
+    : [];
+  if (!steps.length) return;
+
+  const section = document.createElement('section');
+  section.className = `routine-card${compact ? ' compact' : ''}`;
+  const heading = document.createElement('p');
+  heading.className = 'routine-heading';
+  heading.textContent = compact ? 'Little routine' : 'Your tiny routine';
+  section.append(heading);
+
+  const list = document.createElement('div');
+  list.className = 'routine-list';
+  steps.forEach((step) => {
+    const row = document.createElement('div');
+    row.className = `routine-row${step.completed ? ' completed' : ''}`;
+    const toggle = document.createElement('button');
+    toggle.className = 'routine-toggle';
+    toggle.type = 'button';
+    toggle.setAttribute('aria-pressed', String(step.completed));
+    toggle.setAttribute('aria-label', `${step.completed ? 'Undo' : 'Complete'} ${step.title}`);
+    toggle.innerHTML = '<span class="routine-check" aria-hidden="true"></span><span class="routine-icon" aria-hidden="true"></span><span class="routine-title"></span>';
+    toggle.querySelector('.routine-check').textContent = step.completed ? '✓' : '';
+    toggle.querySelector('.routine-icon').textContent = step.icon;
+    toggle.querySelector('.routine-title').textContent = step.title;
+    toggle.addEventListener('click', () => runAction('toggle_routine', null, { routineStepId: step.id }));
+    row.append(toggle);
+
+    if (step.source === 'cleaning_rotation') {
+      const swap = document.createElement('button');
+      swap.className = 'routine-swap';
+      swap.type = 'button';
+      swap.textContent = 'Swap';
+      swap.setAttribute('aria-label', 'Swap today’s tiny cleaning task');
+      swap.addEventListener('click', () => runAction('swap_cleaning'));
+      row.append(swap);
+    }
+    list.append(row);
+  });
+  section.append(list);
+  container.append(section);
+}
+
+async function startLofi() {
+  if (audioContext) return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) throw new Error('Lo-fi ambience is not supported in this browser.');
+  audioContext = new AudioContextClass();
+  await audioContext.resume();
+  const master = audioContext.createGain();
+  master.gain.value = 0.045;
+  master.connect(audioContext.destination);
+
+  const filter = audioContext.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 900;
+  filter.Q.value = 0.6;
+  filter.connect(master);
+
+  [130.81, 164.81, 196, 246.94].forEach((frequency, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = index % 2 ? 'triangle' : 'sine';
+    oscillator.frequency.value = frequency;
+    gain.gain.value = 0.09;
+    oscillator.connect(gain).connect(filter);
+    oscillator.start();
+  });
+
+  const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 3, audioContext.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * 0.08;
+  const noise = audioContext.createBufferSource();
+  const noiseFilter = audioContext.createBiquadFilter();
+  const noiseGain = audioContext.createGain();
+  noise.buffer = buffer;
+  noise.loop = true;
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.value = 1400;
+  noiseGain.gain.value = 0.03;
+  noise.connect(noiseFilter).connect(noiseGain).connect(master);
+  noise.start();
+  lofiButton.textContent = '⏸ Lo-fi';
+  lofiButton.setAttribute('aria-pressed', 'true');
+}
+
+async function stopLofi() {
+  if (audioContext) await audioContext.close();
+  audioContext = null;
+  lofiButton.textContent = '🎧 Lo-fi';
+  lofiButton.setAttribute('aria-pressed', 'false');
 }
 
 function openCloseout() {
@@ -215,7 +329,7 @@ async function requestMeals(effort) {
   setBusy(true, 'Looking only at what you already have…');
   mealResults.innerHTML = '<p class="empty-copy">Finding a few useful choices…</p>';
   try {
-    state = await callRhythm('meal_help', null, { effort });
+    state = { ...state, ...await callRhythm('meal_help', null, { effort }) };
     renderState();
     renderMealChoices();
     dashboardMessage.textContent = '';
@@ -238,6 +352,7 @@ function renderState() {
 
   todayLabel.textContent = friendlyDate(state.date);
   energyPill.textContent = energyLabels[state.energyMode] || energyLabels.normal;
+  applyTheme(state.theme || savedTheme || 'blush');
   renderMealButton();
   closeoutButton.hidden = !state.closeOut?.available;
   renderTransitionPrompt();
@@ -278,6 +393,7 @@ function renderState() {
     node.querySelector('.chunk-time').textContent = state.schedule?.[state.now.template_key] || '';
     const cue = node.querySelector('.transition-cue');
     cue.textContent = state.now.transition_cue || 'You only need to be here right now.';
+    renderRoutine(node.querySelector('.routine-slot'), state.now.template_key);
     node.querySelector('.complete-button').addEventListener('click', () => runAction('complete'));
     node.querySelector('.easier-button').addEventListener('click', () => runAction('make_easier'));
     nowContent.append(node);
@@ -330,10 +446,14 @@ async function runAction(action, chunkId = null, extra = {}) {
     dismiss_prompt: 'Staying here for now…',
     close_out: 'Closing out the day gently…',
     select_meal: 'Saving one less decision for later…',
+    toggle_routine: 'Saving that tiny win…',
+    swap_cleaning: 'Finding a different tiny reset…',
+    set_theme: 'Changing the color mood…',
+    set_lofi: 'Saving your ambience choice…',
   };
   setBusy(true, actionMessages[action] || 'Updating your rhythm…');
   try {
-    state = await callRhythm(action, chunkId, extra);
+    state = { ...state, ...await callRhythm(action, chunkId, extra) };
     renderState();
     dashboardMessage.textContent = state.adaptation?.message || '';
   } catch (error) {
@@ -358,6 +478,30 @@ promptDismiss.addEventListener('click', () => {
 });
 
 closeoutButton.addEventListener('click', openCloseout);
+themeButton.addEventListener('click', () => themeDialog.showModal());
+themeClose.addEventListener('click', () => themeDialog.close());
+document.querySelectorAll('.theme-option').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const theme = button.dataset.theme;
+    applyTheme(theme);
+    themeDialog.close();
+    await runAction('set_theme', null, { theme });
+  });
+});
+lofiButton.addEventListener('click', async () => {
+  try {
+    if (audioContext) {
+      await stopLofi();
+      await runAction('set_lofi', null, { lofiEnabled: false });
+    } else {
+      await startLofi();
+      await runAction('set_lofi', null, { lofiEnabled: true });
+    }
+  } catch (error) {
+    console.error(error);
+    dashboardMessage.textContent = error.message || 'Lo-fi ambience could not start.';
+  }
+});
 mealHelpButton.addEventListener('click', () => {
   mealDialog.showModal();
   requestMeals(effortForEnergy());
