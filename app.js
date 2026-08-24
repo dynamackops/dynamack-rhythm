@@ -3,6 +3,8 @@ import {
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY,
   RHYTHM_ACTION_URL,
+  RHYTHM_CONVERSATION_URL,
+  RHYTHM_LEARNING_URL,
 } from './config.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -52,6 +54,11 @@ const todayLabel = document.querySelector('#today-label');
 const progressLabel = document.querySelector('#progress-label');
 const nowTemplate = document.querySelector('#now-template');
 const smallChunkTemplate = document.querySelector('#small-chunk-template');
+const rhythmChatForm = document.querySelector('#rhythm-chat-form');
+const rhythmChatInput = document.querySelector('#rhythm-chat-input');
+const rhythmChatResponse = document.querySelector('#rhythm-chat-response');
+const learningButton = document.querySelector('#learning-button');
+const learningResults = document.querySelector('#learning-results');
 
 let session = null;
 let state = null;
@@ -120,6 +127,54 @@ async function callRhythm(action = 'get_state', chunkId = null, extra = {}) {
     throw new Error(payload?.message || payload?.error || `Rhythm request failed (${response.status}).`);
   }
   return payload;
+}
+
+async function callPrivateWorkflow(url, body) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+      'x-supabase-key': SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.message || payload?.error || `Rhythm request failed (${response.status}).`);
+  }
+  return payload;
+}
+
+function renderLearning(learning) {
+  learningResults.replaceChildren();
+  learningResults.hidden = false;
+  const headline = document.createElement('h3');
+  headline.textContent = learning.headline || 'Your rhythm lately';
+  learningResults.append(headline);
+
+  if (!learning.ready || !Array.isArray(learning.insights) || learning.insights.length === 0) {
+    const copy = document.createElement('p');
+    copy.className = 'learning-message';
+    copy.textContent = learning.message || 'I’m waiting for enough real history before naming a pattern.';
+    learningResults.append(copy);
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'insight-list';
+  learning.insights.forEach((insight) => {
+    const item = document.createElement('article');
+    item.className = 'insight-item';
+    const body = document.createElement('p');
+    body.textContent = insight.body;
+    const step = document.createElement('p');
+    step.className = 'insight-step';
+    step.textContent = insight.smallStep;
+    item.append(body, step);
+    list.append(item);
+  });
+  learningResults.append(list);
 }
 
 function makeSmallChunk(chunk, context) {
@@ -494,6 +549,54 @@ closeoutForm.addEventListener('submit', async (event) => {
   const promptId = state?.transitionPrompt?.type === 'close_out' ? state.transitionPrompt.id : null;
   closeoutDialog.close();
   await runAction('close_out', null, { mood: selectedMood, note: closeoutNote.value.trim(), promptId });
+});
+
+rhythmChatForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (busy) return;
+  const message = rhythmChatInput.value.trim();
+  if (!message) return;
+  setBusy(true, 'Listening, then checking your current rhythm…');
+  rhythmChatResponse.textContent = '';
+  try {
+    const payload = await callPrivateWorkflow(RHYTHM_CONVERSATION_URL, {
+      date: easternDate(),
+      message,
+    });
+    if (payload.state) {
+      state = payload.state;
+      renderState();
+    }
+    rhythmChatResponse.textContent = payload.agent?.message || 'I kept your rhythm where it is.';
+    rhythmChatInput.value = '';
+    dashboardMessage.textContent = '';
+  } catch (error) {
+    console.error(error);
+    rhythmChatResponse.textContent = error.message || 'Rhythm could not respond yet.';
+  } finally {
+    setBusy(false);
+  }
+});
+
+learningButton.addEventListener('click', async () => {
+  if (busy) return;
+  setBusy(true, 'Looking only for patterns with enough evidence…');
+  learningResults.hidden = false;
+  learningResults.innerHTML = '<p class="learning-message">Looking gently at recent days…</p>';
+  try {
+    const payload = await callPrivateWorkflow(RHYTHM_LEARNING_URL, { windowDays: 28 });
+    renderLearning(payload.learning || {});
+    dashboardMessage.textContent = '';
+  } catch (error) {
+    console.error(error);
+    learningResults.replaceChildren();
+    const copy = document.createElement('p');
+    copy.className = 'learning-message';
+    copy.textContent = error.message || 'Rhythm could not look for patterns yet.';
+    learningResults.append(copy);
+  } finally {
+    setBusy(false);
+  }
 });
 
 loginForm.addEventListener('submit', async (event) => {
