@@ -62,7 +62,7 @@ const loadState = node({
   } },
 });
 
-const decisionSchema = '{"type":"object","additionalProperties":false,"required":["tool","chunkId","energyMode","effort","mealId","mood","guidance"],"properties":{"tool":{"type":"string","enum":["none","get_state","get_current_chunk","get_future_chunks","make_easier","change_energy","start_chunk","complete_chunk","meal_help","select_meal","snooze_transition","close_out"]},"chunkId":{"type":["string","null"]},"energyMode":{"type":["string","null"],"enum":["normal","low_energy","recovery","overwhelmed","momentum",null]},"effort":{"type":["string","null"],"enum":["no_cook","very_easy","cook_a_little",null]},"mealId":{"type":["string","null"]},"mood":{"type":["string","null"],"enum":["good","meh","hard",null]},"guidance":{"type":"string","maxLength":220}}}';
+const decisionSchema = '{"type":"object","additionalProperties":false,"required":["tool","chunkId","energyMode","effort","mealId","mealSlot","mood","guidance"],"properties":{"tool":{"type":"string","enum":["none","get_state","get_current_chunk","get_future_chunks","make_easier","change_energy","start_chunk","complete_chunk","meal_help","select_meal","snooze_transition","close_out"]},"chunkId":{"type":["string","null"]},"energyMode":{"type":["string","null"],"enum":["normal","low_energy","recovery","overwhelmed","momentum",null]},"effort":{"type":["string","null"],"enum":["no_cook","very_easy","cook_a_little",null]},"mealId":{"type":["string","null"]},"mealSlot":{"type":["string","null"],"enum":["breakfast","lunch","dinner",null]},"mood":{"type":["string","null"],"enum":["good","meh","hard",null]},"guidance":{"type":"string","maxLength":220}}}';
 
 const chooseTool = node({
   type: '@n8n/n8n-nodes-langchain.openAi', version: 2.3,
@@ -70,7 +70,7 @@ const chooseTool = node({
     resource: 'text', operation: 'response',
     modelId: { __rl: true, mode: 'id', value: 'gpt-5.4-mini', cachedResultName: 'GPT-5.4-MINI' },
     responses: { values: [
-      { type: 'text', role: 'system', content: 'You are the private Rhythm Agent for one neurodivergent-friendly daily rhythm. Current state is always supplied. Choose zero or one safe tool—the smallest useful action. Never rebuild the day. Never invent calendar events, pantry items, meal IDs, chunk IDs, or context. A meeting or leave time mentioned by the user is information for brief guidance only; do not claim it was saved. Prefer none when no state change is needed. Exhaustion may justify change_energy to low_energy or recovery; do not overreact. “I do not want to cook” should use meal_help with no_cook. Hyperfocus should snooze only when a transitionPrompt exists; otherwise give guidance and preserve flow. Use make_easier only when reducing NOW/NEXT is useful. start_chunk requires an exact unfinished ID from state. complete_chunk is only for an explicit completion. select_meal requires an exact ID already present in mealChoices. close_out requires the user to state Good, Meh, or Hard; never guess mood. Keep guidance to one or two shame-free sentences and briefly say what will change or that nothing changed.' },
+      { type: 'text', role: 'system', content: 'You are the private Rhythm Agent for one neurodivergent-friendly daily rhythm. Current state is always supplied. Choose zero or one safe tool—the smallest useful action. Never rebuild the day. Never invent calendar events, pantry items, meal IDs, chunk IDs, or context. A meeting or leave time mentioned by the user is information for brief guidance only; do not claim it was saved. Prefer none when no state change is needed. Exhaustion may justify change_energy to low_energy or recovery; do not overreact. “I do not want to cook” should use meal_help with no_cook and the relevant breakfast, lunch, or dinner slot. Hyperfocus should snooze only when a transitionPrompt exists; otherwise give guidance and preserve flow. Use make_easier only when reducing NOW/NEXT is useful. start_chunk requires an exact unfinished ID from state. complete_chunk is only for an explicit completion. select_meal requires an exact ID already present in mealChoices and its matching mealSlot. close_out requires the user to state Good, Meh, or Hard; never guess mood. Keep guidance to one or two shame-free sentences and briefly say what will change or that nothing changed.' },
       { type: 'text', role: 'user', content: expr('{{ "User message: " + $("Validate Conversation Request").first().json.message + "\\nCurrent Rhythm state: " + JSON.stringify($("Retrieve Current Rhythm State").first().json) }}') },
     ] },
     simplify: true, builtInTools: {},
@@ -126,15 +126,20 @@ if (tool === 'make_easier') {
   }
 } else if (tool === 'meal_help') {
   const effort = ['no_cook','very_easy','cook_a_little'].includes(d.effort) ? d.effort : 'very_easy';
+  const mealSlot = ['breakfast','lunch','dinner'].includes(d.mealSlot) ? d.mealSlot : 'dinner';
   targetUrl = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/meal-help';
-  requestBody = { action: 'meal_help', date: request.date, effort };
+  requestBody = { action: 'meal_help', date: request.date, effort, mealSlot };
 } else if (tool === 'select_meal') {
   const choices = Array.isArray(state.mealChoices) ? state.mealChoices : [];
   const meal = choices.find((choice) => String(choice.id) === String(d.mealId));
   if (!meal) tool = 'none';
   else {
+    const mealSlot = ['breakfast','lunch','dinner'].includes(d.mealSlot) ? d.mealSlot : meal.mealSlot;
+    if (!['breakfast','lunch','dinner'].includes(mealSlot)) tool = 'none';
+    else {
     targetUrl = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/meal-help';
-    requestBody = { action: 'select_meal', date: request.date, mealId: meal.id };
+    requestBody = { action: 'select_meal', date: request.date, mealId: meal.id, mealSlot };
+    }
   }
 } else if (tool === 'snooze_transition') {
   if (!state.transitionPrompt?.id) tool = 'none';
