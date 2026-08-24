@@ -40,6 +40,18 @@ Phase 3 adds the defining **“Make this easier”** interaction:
 - falls back to deterministic, shame-free cues if AI output is malformed
 - immediately returns the revised NOW / NEXT / LATER state
 
+## Phase 4
+
+Phase 4 adds low-friction food support without turning the pantry into another chore:
+
+- tracks groceries primarily as **Available / Running low / Gone**
+- accepts shopping-order summaries as import batches, so pickup screenshots can refresh the pantry
+- keeps optional counts only where they are genuinely helpful
+- offers at most three meals from **No cooking / Very easy / I can cook a little**
+- filters deterministically against food that is actually available
+- saves one dinner choice to today so the decision does not need to be made twice
+- starts with nine personal meals built around the current groceries and available appliances
+
 ## Phase 5
 
 Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
@@ -57,11 +69,12 @@ Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
 
 - `index.html`, `styles.css`, and `app.js`: visual dashboard
 - Supabase project `Rhythm Agent`: `routine_templates`, `daily_plans`, and `chunks`
-- n8n workflow `Rhythm Agent Router — Phase 5`: authenticated state, chunk, prompt, adaptation, and close-out actions
+- n8n workflow `Rhythm Agent Router — Phase 4`: authenticated state, chunk, prompt, meal, adaptation, and close-out actions
 - n8n workflow `Rhythm Agent — Build My Day`: scheduled and authenticated daily-plan builder
 - n8n workflow `Rhythm Agent — Adapt My Day`: authenticated, changes-only easing workflow
 - n8n workflow `Rhythm Agent — Chunk Transition`: deterministic 10-minute transition check
 - n8n workflow `Rhythm Agent — Evening Reset`: authenticated close-out and history workflow
+- n8n workflow `Rhythm Agent — Meal Chooser`: pantry-aware deterministic dinner choices
 - `config.js`: browser-safe runtime settings; contains no email address or secret key
 - `config.example.js`: reusable configuration template
 - `supabase/phase1_schema.sql`: reproducible Phase 1 database definition
@@ -69,11 +82,13 @@ Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
 - `supabase/phase2_dashboard_state.sql`: Phase 2 dashboard-state response
 - `supabase/phase3_adapt_my_day.sql`: adaptation context and atomic minimal-patch RPC
 - `supabase/phase5_transitions_and_closeout.sql`: prompt lifecycle, close-out check-ins, and day history
+- `supabase/phase4_meal_chooser.sql`: grocery imports, loose pantry state, meal library, and dinner selection
 - `n8n/rhythm-router.ts`: validated Workflow SDK source
 - `n8n/rhythm-build-my-day.ts`: validated Build My Day Workflow SDK source
 - `n8n/rhythm-adapt-my-day.ts`: validated Adapt My Day Workflow SDK source
 - `n8n/rhythm-chunk-transition.ts`: validated scheduled transition Workflow SDK source
 - `n8n/rhythm-evening-reset.ts`: validated close-out Workflow SDK source
+- `n8n/rhythm-meal-chooser.ts`: validated Meal Chooser Workflow SDK source
 
 Before deploying the scheduled source to a private n8n instance, replace
 `__RHYTHM_OWNER_EMAIL__` with the single account the schedule may build for.
@@ -92,5 +107,3 @@ Supabase publishable keys and browser endpoints are designed to appear in fronte
 ## Current scope
 
 AI is constrained to the places where judgment helps. Deterministic routing, validation, monotonic ease levels, patch limits, and persistence remain in n8n and Supabase.
-
-Deployment refreshed after the Netlify Teams upgrade on August 23, 2026.
