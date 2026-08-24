@@ -133,6 +133,7 @@ function renderState() {
     const cue = node.querySelector('.transition-cue');
     cue.textContent = state.now.transition_cue || 'You only need to be here right now.';
     node.querySelector('.complete-button').addEventListener('click', () => runAction('complete'));
+    node.querySelector('.easier-button').addEventListener('click', () => runAction('make_easier'));
     nowContent.append(node);
   } else {
     nowContent.innerHTML = '<div><p class="chunk-kicker">Today is complete</p><h2 class="now-title">Exhale.</h2><p class="transition-cue">Nothing else needs to become overdue.</p></div>';
@@ -177,12 +178,13 @@ async function runAction(action, chunkId = null) {
     start: 'Starting that chunk…',
     reset_today: 'Reopening today…',
     make_day: 'Building a gentle shape for today…',
+    make_easier: 'Making the smallest useful change…',
   };
   setBusy(true, actionMessages[action] || 'Updating your rhythm…');
   try {
     state = await callRhythm(action, chunkId);
     renderState();
-    dashboardMessage.textContent = '';
+    dashboardMessage.textContent = state.adaptation?.message || '';
   } catch (error) {
     console.error(error);
     dashboardMessage.textContent = error.message || 'That change did not save.';
