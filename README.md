@@ -28,19 +28,34 @@ Phase 2 adds a duplicate-safe daily-plan builder while preserving the fixed five
 - falls back safely when AI output is absent or malformed
 - stores movement choices from a small personal library
 
+## Phase 3
+
+Phase 3 adds the defining **“Make this easier”** interaction:
+
+- adapts only NOW and, when useful, NEXT
+- never changes chunk titles, order, status, or completed chunks
+- raises ease by exactly one level per click
+- permits at most two patched chunks
+- validates all AI IDs and movement choices against live Supabase context
+- falls back to deterministic, shame-free cues if AI output is malformed
+- immediately returns the revised NOW / NEXT / LATER state
+
 ## Architecture
 
 - `index.html`, `styles.css`, and `app.js`: visual dashboard
 - Supabase project `Rhythm Agent`: `routine_templates`, `daily_plans`, and `chunks`
 - n8n workflow `Rhythm Agent Router — Phase 2`: authenticated `get_state`, `complete`, `start`, `reset_today`, and `make_day` actions
 - n8n workflow `Rhythm Agent — Build My Day`: scheduled and authenticated daily-plan builder
+- n8n workflow `Rhythm Agent — Adapt My Day`: authenticated, changes-only easing workflow
 - `config.js`: browser-safe runtime settings; contains no email address or secret key
 - `config.example.js`: reusable configuration template
 - `supabase/phase1_schema.sql`: reproducible Phase 1 database definition
 - `supabase/phase2_build_my_day.sql`: movement library and duplicate-safe plan builder
 - `supabase/phase2_dashboard_state.sql`: Phase 2 dashboard-state response
+- `supabase/phase3_adapt_my_day.sql`: adaptation context and atomic minimal-patch RPC
 - `n8n/rhythm-router.ts`: validated Workflow SDK source
 - `n8n/rhythm-build-my-day.ts`: validated Build My Day Workflow SDK source
+- `n8n/rhythm-adapt-my-day.ts`: validated Adapt My Day Workflow SDK source
 
 Before deploying the scheduled source to a private n8n instance, replace
 `__RHYTHM_OWNER_EMAIL__` with the single account the schedule may build for.
@@ -58,4 +73,4 @@ Supabase publishable keys and browser endpoints are designed to appear in fronte
 
 ## Current scope
 
-The only Phase 2 AI decision is whether available context justifies adapting Movement. “Make this easier” begins in Phase 3 and will patch changes only, never regenerate the entire day.
+AI is constrained to the places where judgment helps. Deterministic routing, validation, monotonic ease levels, patch limits, and persistence remain in n8n and Supabase.
