@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f4eee6" />
     <meta name="description" content="A visual daily rhythm system that makes NOW, NEXT, and LATER visible." />
     <title>Rhythm Agent</title>
-    <link rel="stylesheet" href="./styles.css?v=7" />
+    <link rel="stylesheet" href="./styles.css?v=8" />
   </head>
   <body data-rhythm-phase="6">
     <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -46,6 +46,19 @@
         </header>
 
         <p id="dashboard-message" class="message dashboard-message" role="status" aria-live="polite"></p>
+
+        <section class="rhythm-conversation" aria-labelledby="rhythm-conversation-title">
+          <div class="conversation-heading">
+            <p class="prompt-kicker">A quick check-in</p>
+            <h2 id="rhythm-conversation-title">Tell Rhythm what’s going on</h2>
+          </div>
+          <form id="rhythm-chat-form" class="rhythm-chat-form">
+            <label class="sr-only" for="rhythm-chat-input">Tell Rhythm what’s going on</label>
+            <input id="rhythm-chat-input" type="text" maxlength="500" autocomplete="off" placeholder="I’m exhausted today…" required />
+            <button class="conversation-button" type="submit">Tell Rhythm</button>
+          </form>
+          <p id="rhythm-chat-response" class="conversation-response" role="status" aria-live="polite"></p>
+        </section>
 
         <figure class="lofi-scene">
           <figcaption>
@@ -90,6 +103,16 @@
           <span id="progress-label">0 of 5 chunks complete</span>
           <span>Plans adapt. You are not behind.</span>
         </footer>
+
+        <section class="learning-card" aria-labelledby="learning-title">
+          <div>
+            <p class="prompt-kicker">Gentle patterns, not scores</p>
+            <h2 id="learning-title">Your rhythm lately</h2>
+            <p class="learning-copy">What seems to support your brain, based only on days you’ve closed out.</p>
+          </div>
+          <button id="learning-button" class="learning-button" type="button">What’s working?</button>
+          <div id="learning-results" class="learning-results" aria-live="polite" hidden></div>
+        </section>
       </section>
     </main>
 
@@ -179,6 +202,6 @@
       </div>
     </dialog>
 
-    <script type="module" src="./app.js?v=7"></script>
+    <script type="module" src="./app.js?v=8"></script>
   </body>
 </html>
