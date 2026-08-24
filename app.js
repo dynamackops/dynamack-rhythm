@@ -35,6 +35,7 @@ const mealHelpButton = document.querySelector('#meal-help-button');
 const mealDialog = document.querySelector('#meal-dialog');
 const mealClose = document.querySelector('#meal-close');
 const mealResults = document.querySelector('#meal-results');
+const mealDayPlan = document.querySelector('#meal-day-plan');
 const transitionPrompt = document.querySelector('#transition-prompt');
 const transitionTitle = document.querySelector('#transition-title');
 const transitionMessage = document.querySelector('#transition-message');
@@ -66,6 +67,7 @@ let busy = false;
 let busyCount = 0;
 let selectedMood = null;
 let lofiAudio = null;
+let selectedMealSlot = 'dinner';
 
 const LOFI_TRACK_URL = 'https://files.freemusicarchive.org/storage-freemusicarchive-org/tracks/X2xAunfMENT4KSm1XpnQC2qUUC4hcMVbDXBMw9GI.mp3';
 
@@ -299,9 +301,56 @@ function effortForEnergy() {
 }
 
 function renderMealButton() {
-  const dinner = state?.dinnerChoice;
-  mealHelpButton.textContent = dinner ? `🍽️ Dinner: ${dinner.title}` : '🍽️ What can I eat?';
-  mealHelpButton.title = dinner?.instructions || 'Get a few small meal choices from what is available.';
+  const plan = state?.mealPlan || {
+    breakfast: state?.breakfastChoice || null,
+    lunch: state?.lunchChoice || null,
+    dinner: state?.dinnerChoice || null,
+  };
+  const chosen = ['breakfast', 'lunch', 'dinner'].filter((slot) => plan[slot]).length;
+  mealHelpButton.textContent = chosen ? `🍽️ Meals: ${chosen} of 3` : '🍽️ Plan my meals';
+  mealHelpButton.title = chosen
+    ? 'See or change breakfast, lunch, and dinner.'
+    : 'Get a few small meal choices from what is available.';
+}
+
+function mealSlotLabel(slot) {
+  return { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' }[slot] || 'Meal';
+}
+
+function renderMealDayPlan() {
+  mealDayPlan.replaceChildren();
+  const plan = state?.mealPlan || {};
+  ['breakfast', 'lunch', 'dinner'].forEach((slot) => {
+    const item = document.createElement('div');
+    item.className = 'meal-day-item';
+    const label = document.createElement('span');
+    label.textContent = mealSlotLabel(slot);
+    const choice = document.createElement('strong');
+    choice.textContent = plan[slot]?.title || 'Still open';
+    item.append(label, choice);
+    mealDayPlan.append(item);
+  });
+}
+
+function easternHour() {
+  return Number(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', hour: '2-digit', hour12: false,
+  }).format(new Date())) % 24;
+}
+
+function defaultMealSlot() {
+  const plan = state?.mealPlan || {};
+  const hour = easternHour();
+  const preferred = hour < 11 ? 'breakfast' : hour < 16 ? 'lunch' : 'dinner';
+  if (!plan[preferred]) return preferred;
+  return ['breakfast', 'lunch', 'dinner'].find((slot) => !plan[slot]) || preferred;
+}
+
+function selectMealSlot(slot) {
+  selectedMealSlot = slot;
+  document.querySelectorAll('.meal-slot-button').forEach((button) => {
+    button.classList.toggle('selected', button.dataset.mealSlot === slot);
+  });
 }
 
 function renderMealChoices() {
@@ -338,15 +387,16 @@ function renderMealChoices() {
     choose.textContent = 'Choose this';
     choose.addEventListener('click', async () => {
       mealDialog.close();
-      await runAction('select_meal', null, { mealId: meal.id });
-      dashboardMessage.textContent = `Dinner is ${state.dinnerChoice?.title || 'chosen'}. One less decision.`;
+      await runAction('select_meal', null, { mealId: meal.id, mealSlot: selectedMealSlot });
+      const selected = state.mealPlan?.[selectedMealSlot];
+      dashboardMessage.textContent = `${mealSlotLabel(selectedMealSlot)} is ${selected?.title || 'chosen'}. One less decision.`;
     });
     card.append(choose);
     mealResults.append(card);
   });
 }
 
-async function requestMeals(effort) {
+async function requestMeals(effort, mealSlot = selectedMealSlot) {
   if (busy) return;
   document.querySelectorAll('.effort-button').forEach((button) => {
     button.classList.toggle('selected', button.dataset.effort === effort);
@@ -354,8 +404,9 @@ async function requestMeals(effort) {
   setBusy(true, 'Looking only at what you already have…');
   mealResults.innerHTML = '<p class="empty-copy">Finding a few useful choices…</p>';
   try {
-    state = { ...state, ...await callRhythm('meal_help', null, { effort }) };
+    state = { ...state, ...await callRhythm('meal_help', null, { effort, mealSlot }) };
     renderState();
+    renderMealDayPlan();
     renderMealChoices();
     dashboardMessage.textContent = '';
   } catch (error) {
@@ -529,9 +580,18 @@ lofiButton.addEventListener('click', async () => {
 });
 mealHelpButton.addEventListener('click', () => {
   mealDialog.showModal();
-  requestMeals(effortForEnergy());
+  selectMealSlot(defaultMealSlot());
+  renderMealDayPlan();
+  requestMeals(effortForEnergy(), selectedMealSlot);
 });
 mealClose.addEventListener('click', () => mealDialog.close());
+document.querySelectorAll('.meal-slot-button').forEach((button) => {
+  button.addEventListener('click', () => {
+    selectMealSlot(button.dataset.mealSlot);
+    const effort = document.querySelector('.effort-button.selected')?.dataset.effort || effortForEnergy();
+    requestMeals(effort, selectedMealSlot);
+  });
+});
 document.querySelectorAll('.effort-button').forEach((button) => {
   button.addEventListener('click', () => requestMeals(button.dataset.effort));
 });
