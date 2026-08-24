@@ -52,6 +52,7 @@ const smallChunkTemplate = document.querySelector('#small-chunk-template');
 let session = null;
 let state = null;
 let busy = false;
+let busyCount = 0;
 let selectedMood = null;
 
 function easternDate() {
@@ -69,12 +70,13 @@ function friendlyDate(date) {
 }
 
 function setBusy(value, message = '') {
-  busy = value;
+  busyCount = value ? busyCount + 1 : Math.max(0, busyCount - 1);
+  busy = busyCount > 0;
   document.querySelectorAll('button').forEach((button) => {
-    if (value) {
+    if (busy && button.dataset.rhythmWasDisabled === undefined) {
       button.dataset.rhythmWasDisabled = button.disabled ? '1' : '0';
       button.disabled = true;
-    } else if (button.dataset.rhythmWasDisabled) {
+    } else if (!busy && button.dataset.rhythmWasDisabled !== undefined) {
       button.disabled = button.dataset.rhythmWasDisabled === '1';
       delete button.dataset.rhythmWasDisabled;
     }
