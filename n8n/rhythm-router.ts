@@ -28,7 +28,10 @@ const input = $input.first().json;
 const body = input.body || {};
 const headers = input.headers || {};
 const action = String(body.action || 'get_state');
-const allowed = ['get_state', 'complete', 'start', 'reset_today', 'make_day', 'make_easier'];
+const allowed = [
+  'get_state', 'complete', 'start', 'reset_today', 'make_day', 'make_easier',
+  'accept_prompt', 'snooze_prompt', 'dismiss_prompt', 'close_out'
+];
 
 if (!allowed.includes(action)) throw new Error('Unsupported Rhythm action: ' + action);
 
@@ -43,8 +46,15 @@ if (!supabaseKey) throw new Error('Missing x-supabase-key header.');
 const date = String(body.date || '');
 if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('date must use YYYY-MM-DD.');
 
-let targetUrl = 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_apply_action';
-let requestBody = { p_action: action, p_date: date, p_chunk_id: body.chunkId || null };
+let targetUrl = 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_phase5_action';
+let requestBody = {
+  p_action: action,
+  p_date: date,
+  p_chunk_id: body.chunkId || null,
+  p_prompt_id: body.promptId || null,
+  p_mood: null,
+  p_note: null,
+};
 
 if (action === 'make_day') {
   targetUrl = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/build-day';
@@ -54,6 +64,14 @@ if (action === 'make_day') {
   requestBody = {
     date,
     note: typeof body.note === 'string' ? body.note.trim().slice(0, 500) : null,
+  };
+} else if (action === 'close_out') {
+  targetUrl = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/close-out-day';
+  requestBody = {
+    date,
+    promptId: body.promptId || null,
+    mood: typeof body.mood === 'string' ? body.mood : null,
+    note: typeof body.note === 'string' ? body.note.trim().slice(0, 280) : null,
   };
 }
 
@@ -119,7 +137,7 @@ const respond = node({
   },
 });
 
-export default workflow('rhythm-agent-router-phase-3', 'Rhythm Agent Router — Phase 3')
+export default workflow('rhythm-agent-router-phase-5', 'Rhythm Agent Router — Phase 5')
   .add(actionWebhook)
   .to(normalizeRequest)
   .to(callRoutedAction)
