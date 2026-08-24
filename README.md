@@ -49,7 +49,9 @@ Phase 4 adds low-friction food support without turning the pantry into another c
 - keeps optional counts only where they are genuinely helpful
 - offers at most three meals from **No cooking / Very easy / I can cook a little**
 - filters deterministically against food that is actually available
-- saves one dinner choice to today so the decision does not need to be made twice
+- supports separate breakfast, lunch, and dinner choices without introducing a second planning system
+- tags each meal by the day parts where it makes sense, then filters choices by both pantry availability and meal slot
+- saves each choice to today so the decision does not need to be made twice
 - starts with nine personal meals built around the current groceries and available appliances
 
 ## Phase 5
@@ -94,7 +96,7 @@ The dashboard now includes one lightweight **“Tell Rhythm what’s going on”
 - n8n workflow `Rhythm Agent — Adapt My Day`: authenticated, changes-only easing workflow
 - n8n workflow `Rhythm Agent — Chunk Transition`: deterministic 10-minute transition check
 - n8n workflow `Rhythm Agent — Evening Reset`: authenticated close-out and history workflow
-- n8n workflow `Rhythm Agent — Meal Chooser`: pantry-aware deterministic dinner choices
+- n8n workflow `Rhythm Agent — Meal Chooser`: pantry-aware, slot-specific breakfast, lunch, and dinner choices
 - n8n workflow `Rhythm Agent — Conversation`: current-state-first, single-tool conversational routing
 - n8n workflow `Rhythm Agent — Learn My Rhythm`: deterministic recent-history patterns with evidence-bound summaries
 - `config.js`: browser-safe runtime settings; contains no email address or secret key
@@ -106,6 +108,7 @@ The dashboard now includes one lightweight **“Tell Rhythm what’s going on”
 - `supabase/phase5_transitions_and_closeout.sql`: prompt lifecycle, close-out check-ins, and day history
 - `supabase/phase4_meal_chooser.sql`: grocery imports, loose pantry state, meal library, and dinner selection
 - `supabase/phase7_conversation_learning.sql`: narrow energy action and read-only learning aggregates
+- `supabase/phase8_all_day_meals.sql`: slot-aware meal library, all-day meal persistence, and authenticated meal actions
 - `n8n/rhythm-router.ts`: validated Workflow SDK source
 - `n8n/rhythm-build-my-day.ts`: validated Build My Day Workflow SDK source
 - `n8n/rhythm-adapt-my-day.ts`: validated Adapt My Day Workflow SDK source
