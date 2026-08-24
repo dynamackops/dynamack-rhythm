@@ -65,6 +65,26 @@ Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
 - records **😊 Good / 😐 Meh / 😩 Hard** and one optional short note
 - saves a compact day-history snapshot and expires unfinished routine chunks without overdue guilt
 
+## Conversational Rhythm Agent
+
+The dashboard now includes one lightweight **“Tell Rhythm what’s going on”** input. Every request retrieves the current state first, and the model may choose at most one allowlisted action. It cannot write arbitrary database records.
+
+- uses existing safe actions for easing, energy, chunks, meals, transitions, and close-out
+- validates chunk, prompt, meal, energy, and mood values against current state
+- preserves the day when guidance is enough
+- never claims a meeting, pantry item, or personal detail was saved when it was not
+- returns one or two brief, shame-free sentences explaining what changed
+
+## Rhythm Learning
+
+**Your rhythm lately** looks for supportive patterns across the latest 14–28 days. Deterministic SQL computes the evidence first; AI can only rephrase supported pattern IDs.
+
+- waits for at least three closed-out days before naming a pattern
+- compares energy, chunk easing/completion, meal effort, and movement fallback use
+- does not show streaks, scores, productivity percentages, red flags, or failure language
+- returns a gentle “still learning” state when the evidence is thin
+- creates no analytics profile and no new persistence table
+
 ## Architecture
 
 - `index.html`, `styles.css`, and `app.js`: visual dashboard
@@ -75,6 +95,8 @@ Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
 - n8n workflow `Rhythm Agent — Chunk Transition`: deterministic 10-minute transition check
 - n8n workflow `Rhythm Agent — Evening Reset`: authenticated close-out and history workflow
 - n8n workflow `Rhythm Agent — Meal Chooser`: pantry-aware deterministic dinner choices
+- n8n workflow `Rhythm Agent — Conversation`: current-state-first, single-tool conversational routing
+- n8n workflow `Rhythm Agent — Learn My Rhythm`: deterministic recent-history patterns with evidence-bound summaries
 - `config.js`: browser-safe runtime settings; contains no email address or secret key
 - `config.example.js`: reusable configuration template
 - `supabase/phase1_schema.sql`: reproducible Phase 1 database definition
@@ -83,12 +105,15 @@ Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
 - `supabase/phase3_adapt_my_day.sql`: adaptation context and atomic minimal-patch RPC
 - `supabase/phase5_transitions_and_closeout.sql`: prompt lifecycle, close-out check-ins, and day history
 - `supabase/phase4_meal_chooser.sql`: grocery imports, loose pantry state, meal library, and dinner selection
+- `supabase/phase7_conversation_learning.sql`: narrow energy action and read-only learning aggregates
 - `n8n/rhythm-router.ts`: validated Workflow SDK source
 - `n8n/rhythm-build-my-day.ts`: validated Build My Day Workflow SDK source
 - `n8n/rhythm-adapt-my-day.ts`: validated Adapt My Day Workflow SDK source
 - `n8n/rhythm-chunk-transition.ts`: validated scheduled transition Workflow SDK source
 - `n8n/rhythm-evening-reset.ts`: validated close-out Workflow SDK source
 - `n8n/rhythm-meal-chooser.ts`: validated Meal Chooser Workflow SDK source
+- `n8n/rhythm-conversation.ts`: validated conversational Workflow SDK source
+- `n8n/rhythm-learn-my-rhythm.ts`: validated learning Workflow SDK source
 
 Before deploying the scheduled source to a private n8n instance, replace
 `__RHYTHM_OWNER_EMAIL__` with the single account the schedule may build for.
