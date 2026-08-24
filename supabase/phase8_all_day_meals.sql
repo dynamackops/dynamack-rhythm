@@ -19,6 +19,13 @@ alter table public.meals
     and meal_slots <@ array['breakfast', 'lunch', 'dinner']::text[]
   );
 
+-- Cover the new foreign keys. These may appear unused until normal meal-plan
+-- traffic accumulates, but avoid full scans during referenced-meal changes.
+create index if not exists daily_plans_breakfast_meal_id_idx
+  on public.daily_plans (breakfast_meal_id);
+create index if not exists daily_plans_lunch_meal_id_idx
+  on public.daily_plans (lunch_meal_id);
+
 update public.meals
 set meal_slots = case meal_key
   when 'salmon_rice_vegetables' then array['lunch', 'dinner']::text[]
