@@ -58,7 +58,9 @@ let state = null;
 let busy = false;
 let busyCount = 0;
 let selectedMood = null;
-let audioContext = null;
+let lofiAudio = null;
+
+const LOFI_TRACK_URL = 'https://files.freemusicarchive.org/storage-freemusicarchive-org/tracks/X2xAunfMENT4KSm1XpnQC2qUUC4hcMVbDXBMw9GI.mp3';
 
 const savedTheme = window.localStorage.getItem('rhythm-theme');
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
@@ -194,51 +196,19 @@ function renderRoutine(container, chunkKey, compact = false) {
 }
 
 async function startLofi() {
-  if (audioContext) return;
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) throw new Error('Lo-fi ambience is not supported in this browser.');
-  audioContext = new AudioContextClass();
-  await audioContext.resume();
-  const master = audioContext.createGain();
-  master.gain.value = 0.045;
-  master.connect(audioContext.destination);
-
-  const filter = audioContext.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 900;
-  filter.Q.value = 0.6;
-  filter.connect(master);
-
-  [130.81, 164.81, 196, 246.94].forEach((frequency, index) => {
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    oscillator.type = index % 2 ? 'triangle' : 'sine';
-    oscillator.frequency.value = frequency;
-    gain.gain.value = 0.09;
-    oscillator.connect(gain).connect(filter);
-    oscillator.start();
-  });
-
-  const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 3, audioContext.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * 0.08;
-  const noise = audioContext.createBufferSource();
-  const noiseFilter = audioContext.createBiquadFilter();
-  const noiseGain = audioContext.createGain();
-  noise.buffer = buffer;
-  noise.loop = true;
-  noiseFilter.type = 'bandpass';
-  noiseFilter.frequency.value = 1400;
-  noiseGain.gain.value = 0.03;
-  noise.connect(noiseFilter).connect(noiseGain).connect(master);
-  noise.start();
+  if (!lofiAudio) {
+    lofiAudio = new Audio(LOFI_TRACK_URL);
+    lofiAudio.loop = true;
+    lofiAudio.preload = 'auto';
+    lofiAudio.volume = 0.28;
+  }
+  await lofiAudio.play();
   lofiButton.textContent = '⏸ Lo-fi';
   lofiButton.setAttribute('aria-pressed', 'true');
 }
 
-async function stopLofi() {
-  if (audioContext) await audioContext.close();
-  audioContext = null;
+function stopLofi() {
+  lofiAudio?.pause();
   lofiButton.textContent = '🎧 Lo-fi';
   lofiButton.setAttribute('aria-pressed', 'false');
 }
@@ -490,8 +460,8 @@ document.querySelectorAll('.theme-option').forEach((button) => {
 });
 lofiButton.addEventListener('click', async () => {
   try {
-    if (audioContext) {
-      await stopLofi();
+    if (lofiAudio && !lofiAudio.paused) {
+      stopLofi();
       await runAction('set_lofi', null, { lofiEnabled: false });
     } else {
       await startLofi();
