@@ -109,7 +109,18 @@ button:disabled { cursor: wait; opacity: 0.58; }
 .easier-button:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.9); }
 .quiet-button { padding: 10px 14px; color: var(--ink); background: rgba(255, 255, 255, 0.66); }
 .closeout-button { padding: 10px 14px; color: white; background: var(--rose-dark); }
-.meal-help-button { max-width: 330px; padding: 10px 14px; overflow: hidden; color: #4f654f; background: #e7f0e4; text-overflow: ellipsis; white-space: nowrap; }
+.meal-help-button {
+  max-width: 330px;
+  padding: 10px 14px;
+  overflow: hidden;
+  border: 1px solid #759175;
+  color: #304b30;
+  background: #d9ead5;
+  box-shadow: 0 5px 14px rgba(79, 101, 79, 0.13);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.meal-help-button:hover { transform: translateY(-1px); color: #233c23; background: #cde3c8; box-shadow: 0 10px 22px rgba(79, 101, 79, 0.2); }
 .start-button { flex: 0 0 auto; padding: 9px 13px; color: var(--rose-dark); background: #f7e8e7; }
 .recovery-button { margin-top: 28px; padding: 10px 14px; border: 1px solid var(--line); color: var(--muted); background: rgba(255, 255, 255, 0.5); }
 .recovery-button:hover { color: var(--ink); background: rgba(255, 255, 255, 0.82); }
