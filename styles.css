@@ -112,7 +112,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
 }
 .login-form input:focus { border-color: var(--rose); box-shadow: 0 0 0 4px rgba(201, 120, 120, 0.15); }
 
-.primary-button, .complete-button, .easier-button, .start-button, .quiet-button, .recovery-button, .closeout-button, .meal-help-button, .mood-button, .effort-button, .theme-button, .lofi-button, .routine-toggle, .routine-swap, .theme-option {
+.primary-button, .complete-button, .easier-button, .start-button, .quiet-button, .recovery-button, .closeout-button, .meal-help-button, .mood-button, .effort-button, .theme-button, .lofi-button, .routine-toggle, .routine-swap, .theme-option, .conversation-button, .learning-button {
   border: 0;
   border-radius: 14px;
   font-weight: 800;
@@ -144,6 +144,26 @@ button:disabled { cursor: wait; opacity: 0.58; }
 
 .message { min-height: 1.5em; margin: 16px 0 0; color: var(--rose-dark); line-height: 1.45; }
 .dashboard-message { margin: 8px 0 18px; }
+
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.rhythm-conversation {
+  display:grid;
+  grid-template-columns:minmax(210px,.65fr) minmax(320px,1.35fr);
+  gap:10px 24px;
+  align-items:end;
+  margin:0 0 20px;
+  padding:18px 20px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:color-mix(in srgb,var(--paper) 86%,transparent);
+  box-shadow:0 12px 30px rgba(77,57,45,.06);
+}
+.conversation-heading h2 { margin:0; font-size:clamp(1.15rem,2vw,1.55rem); letter-spacing:-.025em; }
+.rhythm-chat-form { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+.rhythm-chat-form input { min-width:0; padding:13px 15px; border:1px solid var(--line); border-radius:14px; color:var(--ink); background:var(--dialog-surface); font:inherit; outline:none; }
+.rhythm-chat-form input:focus { border-color:var(--rose); box-shadow:0 0 0 4px color-mix(in srgb,var(--rose) 16%,transparent); }
+.conversation-button, .learning-button { padding:12px 15px; color:white; background:var(--rose-dark); }
+.conversation-response { grid-column:2; min-height:1.35em; margin:0; color:var(--muted); line-height:1.45; }
 
 .lofi-scene {
   position: relative;
@@ -253,6 +273,18 @@ button:disabled { cursor: wait; opacity: 0.58; }
 
 .footer-note { display: flex; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 0 8px; color: var(--muted); font-size: 0.9rem; }
 
+.learning-card { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px 24px; align-items:center; margin-top:30px; padding:22px 24px; border:1px solid var(--line); border-radius:24px; background:color-mix(in srgb,var(--paper) 80%,transparent); }
+.learning-card h2 { margin:0; font-size:clamp(1.5rem,2.5vw,2.15rem); letter-spacing:-.035em; }
+.learning-copy { max-width:62ch; margin:6px 0 0; color:var(--muted); line-height:1.45; }
+.learning-results { grid-column:1 / -1; padding-top:16px; border-top:1px solid var(--line); }
+.learning-results[hidden] { display:none; }
+.learning-results h3 { margin:0 0 10px; font-size:1.2rem; }
+.learning-message { margin:0; color:var(--muted); line-height:1.5; }
+.insight-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.insight-item { padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--soft-surface); }
+.insight-item p { margin:0; line-height:1.45; }
+.insight-step { margin-top:8px !important; color:var(--muted); font-size:.9rem; }
+
 .closeout-dialog, .meal-dialog, .theme-dialog {
   width: min(560px, calc(100% - 28px));
   padding: 0;
@@ -316,6 +348,15 @@ button:disabled { cursor: wait; opacity: 0.58; }
 :root[data-theme="dark"] .closeout-dialog textarea { color:var(--ink); background:rgba(255,255,255,.08); }
 :root[data-theme="dark"] .meal-help-button { border-color:#789178; color:#d9ecd7; background:#354536; }
 :root[data-theme="dark"] .start-button { color:#f1c5d2; background:#4d3540; }
+
+@media (max-width: 760px) {
+  .rhythm-conversation { grid-template-columns:1fr; }
+  .conversation-response { grid-column:1; }
+  .rhythm-chat-form { grid-template-columns:1fr; }
+  .learning-card { grid-template-columns:1fr; }
+  .learning-button { justify-self:start; }
+  .insight-list { grid-template-columns:1fr; }
+}
 
 @media (min-width: 1600px) {
   .shell { width: min(1720px, calc(100% - 72px)); }
