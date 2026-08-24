@@ -40,22 +40,40 @@ Phase 3 adds the defining **“Make this easier”** interaction:
 - falls back to deterministic, shame-free cues if AI output is malformed
 - immediately returns the revised NOW / NEXT / LATER state
 
+## Phase 5
+
+Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
+
+- checks for a due transition every 10 minutes in Eastern time
+- surfaces at most one suggestion and never changes chunks automatically
+- offers **Start now / 15 more minutes / Stay here for now**
+- treats 4–5 PM as a “change into gym clothes, then relax” preparation bridge
+- keeps 6–7 PM as a simple dinner bridge until Meal Chooser is built
+- offers **Close out the day** at 9 PM while keeping the button manually available
+- records **😊 Good / 😐 Meh / 😩 Hard** and one optional short note
+- saves a compact day-history snapshot and expires unfinished routine chunks without overdue guilt
+
 ## Architecture
 
 - `index.html`, `styles.css`, and `app.js`: visual dashboard
 - Supabase project `Rhythm Agent`: `routine_templates`, `daily_plans`, and `chunks`
-- n8n workflow `Rhythm Agent Router — Phase 2`: authenticated `get_state`, `complete`, `start`, `reset_today`, and `make_day` actions
+- n8n workflow `Rhythm Agent Router — Phase 5`: authenticated state, chunk, prompt, adaptation, and close-out actions
 - n8n workflow `Rhythm Agent — Build My Day`: scheduled and authenticated daily-plan builder
 - n8n workflow `Rhythm Agent — Adapt My Day`: authenticated, changes-only easing workflow
+- n8n workflow `Rhythm Agent — Chunk Transition`: deterministic 10-minute transition check
+- n8n workflow `Rhythm Agent — Evening Reset`: authenticated close-out and history workflow
 - `config.js`: browser-safe runtime settings; contains no email address or secret key
 - `config.example.js`: reusable configuration template
 - `supabase/phase1_schema.sql`: reproducible Phase 1 database definition
 - `supabase/phase2_build_my_day.sql`: movement library and duplicate-safe plan builder
 - `supabase/phase2_dashboard_state.sql`: Phase 2 dashboard-state response
 - `supabase/phase3_adapt_my_day.sql`: adaptation context and atomic minimal-patch RPC
+- `supabase/phase5_transitions_and_closeout.sql`: prompt lifecycle, close-out check-ins, and day history
 - `n8n/rhythm-router.ts`: validated Workflow SDK source
 - `n8n/rhythm-build-my-day.ts`: validated Build My Day Workflow SDK source
 - `n8n/rhythm-adapt-my-day.ts`: validated Adapt My Day Workflow SDK source
+- `n8n/rhythm-chunk-transition.ts`: validated scheduled transition Workflow SDK source
+- `n8n/rhythm-evening-reset.ts`: validated close-out Workflow SDK source
 
 Before deploying the scheduled source to a private n8n instance, replace
 `__RHYTHM_OWNER_EMAIL__` with the single account the schedule may build for.
