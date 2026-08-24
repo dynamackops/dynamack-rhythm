@@ -34,7 +34,7 @@ body {
   isolation: isolate;
 }
 
-body::before { content:""; position:fixed; inset:0; z-index:-2; background:url('./assets/lofi-room.png') center/cover no-repeat; opacity:var(--art-opacity); pointer-events:none; }
+body::before { content:""; position:fixed; inset:0; z-index:-2; background:url('./assets/lofi-room.webp') center/cover no-repeat; opacity:var(--art-opacity); pointer-events:none; }
 body::after { content:""; position:fixed; inset:0; z-index:-2; background:linear-gradient(rgba(255,255,255,.12),var(--cream)); pointer-events:none; }
 :root[data-theme="dark"] body::after { background:linear-gradient(rgba(13,13,18,.35),var(--cream)); }
 
