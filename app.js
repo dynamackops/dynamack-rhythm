@@ -25,6 +25,10 @@ const dashboardMessage = document.querySelector('#dashboard-message');
 const refreshButton = document.querySelector('#refresh-button');
 const signoutButton = document.querySelector('#signout-button');
 const closeoutButton = document.querySelector('#closeout-button');
+const mealHelpButton = document.querySelector('#meal-help-button');
+const mealDialog = document.querySelector('#meal-dialog');
+const mealClose = document.querySelector('#meal-close');
+const mealResults = document.querySelector('#meal-results');
 const transitionPrompt = document.querySelector('#transition-prompt');
 const transitionTitle = document.querySelector('#transition-title');
 const transitionMessage = document.querySelector('#transition-message');
@@ -66,7 +70,15 @@ function friendlyDate(date) {
 
 function setBusy(value, message = '') {
   busy = value;
-  document.querySelectorAll('button').forEach((button) => { button.disabled = value; });
+  document.querySelectorAll('button').forEach((button) => {
+    if (value) {
+      button.dataset.rhythmWasDisabled = button.disabled ? '1' : '0';
+      button.disabled = true;
+    } else if (button.dataset.rhythmWasDisabled) {
+      button.disabled = button.dataset.rhythmWasDisabled === '1';
+      delete button.dataset.rhythmWasDisabled;
+    }
+  });
   if (message) dashboardMessage.textContent = message;
 }
 
@@ -139,6 +151,84 @@ function renderTransitionPrompt() {
         : 'Got it';
 }
 
+function effortForEnergy() {
+  if (['recovery', 'overwhelmed'].includes(state?.energyMode)) return 'no_cook';
+  if (state?.energyMode === 'low_energy') return 'very_easy';
+  return 'very_easy';
+}
+
+function renderMealButton() {
+  const dinner = state?.dinnerChoice;
+  mealHelpButton.textContent = dinner ? `Dinner: ${dinner.title}` : 'What can I eat?';
+  mealHelpButton.title = dinner?.instructions || 'Get a few small meal choices from what is available.';
+}
+
+function renderMealChoices() {
+  mealResults.replaceChildren();
+  const choices = state?.mealChoices;
+  if (!Array.isArray(choices) || choices.length === 0) {
+    mealResults.innerHTML = '<p class="empty-copy">Nothing matched this effort level. Try another one—no need to force it.</p>';
+    return;
+  }
+
+  choices.forEach((meal) => {
+    const card = document.createElement('article');
+    card.className = 'meal-card';
+    const ingredients = meal.ingredients
+      .filter((ingredient) => ingredient.required)
+      .map((ingredient) => ingredient.name)
+      .join(' · ');
+    card.innerHTML = `
+      <div>
+        <p class="meal-meta">${meal.minutes} minutes</p>
+        <h3></h3>
+        <p class="meal-ingredients"></p>
+        <p class="meal-instructions"></p>
+        <p class="meal-support"></p>
+      </div>
+    `;
+    card.querySelector('h3').textContent = meal.title;
+    card.querySelector('.meal-ingredients').textContent = ingredients;
+    card.querySelector('.meal-instructions').textContent = meal.instructions;
+    card.querySelector('.meal-support').textContent = meal.supportiveNote || '';
+    const choose = document.createElement('button');
+    choose.className = 'complete-button';
+    choose.type = 'button';
+    choose.textContent = 'Choose this';
+    choose.addEventListener('click', async () => {
+      mealDialog.close();
+      await runAction('select_meal', null, { mealId: meal.id });
+      dashboardMessage.textContent = `Dinner is ${state.dinnerChoice?.title || 'chosen'}. One less decision.`;
+    });
+    card.append(choose);
+    mealResults.append(card);
+  });
+}
+
+async function requestMeals(effort) {
+  if (busy) return;
+  document.querySelectorAll('.effort-button').forEach((button) => {
+    button.classList.toggle('selected', button.dataset.effort === effort);
+  });
+  setBusy(true, 'Looking only at what you already have…');
+  mealResults.innerHTML = '<p class="empty-copy">Finding a few useful choices…</p>';
+  try {
+    state = await callRhythm('meal_help', null, { effort });
+    renderState();
+    renderMealChoices();
+    dashboardMessage.textContent = '';
+  } catch (error) {
+    console.error(error);
+    mealResults.replaceChildren();
+    const errorCopy = document.createElement('p');
+    errorCopy.className = 'empty-copy';
+    errorCopy.textContent = error.message || 'Meal help could not load yet.';
+    mealResults.append(errorCopy);
+  } finally {
+    setBusy(false);
+  }
+}
+
 function renderState() {
   nowContent.replaceChildren();
   nextContent.replaceChildren();
@@ -146,6 +236,7 @@ function renderState() {
 
   todayLabel.textContent = friendlyDate(state.date);
   energyPill.textContent = energyLabels[state.energyMode] || energyLabels.normal;
+  renderMealButton();
   closeoutButton.hidden = !state.closeOut?.available;
   renderTransitionPrompt();
 
@@ -236,6 +327,7 @@ async function runAction(action, chunkId = null, extra = {}) {
     snooze_prompt: 'Giving you 15 more minutes…',
     dismiss_prompt: 'Staying here for now…',
     close_out: 'Closing out the day gently…',
+    select_meal: 'Saving one less decision for later…',
   };
   setBusy(true, actionMessages[action] || 'Updating your rhythm…');
   try {
@@ -264,6 +356,14 @@ promptDismiss.addEventListener('click', () => {
 });
 
 closeoutButton.addEventListener('click', openCloseout);
+mealHelpButton.addEventListener('click', () => {
+  mealDialog.showModal();
+  requestMeals(effortForEnergy());
+});
+mealClose.addEventListener('click', () => mealDialog.close());
+document.querySelectorAll('.effort-button').forEach((button) => {
+  button.addEventListener('click', () => requestMeals(button.dataset.effort));
+});
 closeoutCancel.addEventListener('click', () => closeoutDialog.close());
 document.querySelectorAll('.mood-button').forEach((button) => {
   button.addEventListener('click', () => {
