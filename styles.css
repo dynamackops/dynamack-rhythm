@@ -14,13 +14,13 @@
   --now-gradient: linear-gradient(150deg, rgba(255,253,250,.97), rgba(249,232,230,.86));
   --soft-surface: rgba(255, 255, 255, 0.66);
   --dialog-surface: #fffaf6;
-  --art-opacity: 0.18;
+  --art-opacity: 0.24;
 }
 
 :root[data-theme="lavender"] { --ink:#302b39; --muted:#746b7e; --cream:#f3eff8; --paper:rgba(253,250,255,.9); --rose:#a98ac4; --rose-dark:#7d6199; --sage:#94a98f; --gold:#c8a65d; --line:rgba(67,52,80,.13); --shadow:0 28px 70px rgba(73,51,89,.13); --now-gradient:linear-gradient(150deg,rgba(253,250,255,.97),rgba(237,226,248,.9)); --dialog-surface:#fcf8ff; }
 :root[data-theme="blue"] { --ink:#26323d; --muted:#667682; --cream:#edf4f7; --paper:rgba(249,253,255,.9); --rose:#7da5bf; --rose-dark:#527d9a; --sage:#8fa994; --gold:#d0a95d; --line:rgba(43,75,94,.13); --shadow:0 28px 70px rgba(47,80,99,.13); --now-gradient:linear-gradient(150deg,rgba(250,254,255,.97),rgba(222,239,248,.9)); --dialog-surface:#f8fcfe; }
 :root[data-theme="sage"] { --ink:#28332b; --muted:#68766c; --cream:#eef3ec; --paper:rgba(251,253,249,.9); --rose:#8fab91; --rose-dark:#5f8066; --sage:#789b7e; --gold:#c8a454; --line:rgba(45,77,52,.13); --shadow:0 28px 70px rgba(47,80,54,.13); --now-gradient:linear-gradient(150deg,rgba(252,254,250,.97),rgba(224,238,222,.9)); --dialog-surface:#f9fcf7; }
-:root[data-theme="dark"] { color-scheme:dark; --ink:#f5eee8; --muted:#beb3ad; --cream:#17171d; --paper:rgba(31,30,38,.9); --rose:#d39aac; --rose-dark:#b87891; --sage:#8fad96; --gold:#d8b76c; --line:rgba(255,244,235,.12); --shadow:0 30px 80px rgba(0,0,0,.34); --now-gradient:linear-gradient(150deg,rgba(39,36,44,.96),rgba(52,39,47,.91)); --soft-surface:rgba(255,255,255,.09); --dialog-surface:#242129; --art-opacity:.1; }
+:root[data-theme="dark"] { color-scheme:dark; --ink:#f5eee8; --muted:#beb3ad; --cream:#17171d; --paper:rgba(31,30,38,.9); --rose:#d39aac; --rose-dark:#b87891; --sage:#8fad96; --gold:#d8b76c; --line:rgba(255,244,235,.12); --shadow:0 30px 80px rgba(0,0,0,.34); --now-gradient:linear-gradient(150deg,rgba(39,36,44,.96),rgba(52,39,47,.91)); --soft-surface:rgba(255,255,255,.09); --dialog-surface:#242129; --art-opacity:.16; }
 
 * { box-sizing: border-box; }
 
@@ -144,6 +144,22 @@ button:disabled { cursor: wait; opacity: 0.58; }
 
 .message { min-height: 1.5em; margin: 16px 0 0; color: var(--rose-dark); line-height: 1.45; }
 .dashboard-message { margin: 8px 0 18px; }
+
+.lofi-scene {
+  position: relative;
+  min-height: clamp(130px, 15vw, 210px);
+  margin: 0 0 20px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: url('./assets/lofi-room.webp') center 48% / cover no-repeat;
+  box-shadow: var(--shadow);
+}
+.lofi-scene::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(25,19,18,.42),transparent 58%); pointer-events:none; }
+.lofi-scene figcaption { position:absolute; z-index:1; left:20px; bottom:18px; display:grid; gap:3px; color:white; text-shadow:0 2px 14px rgba(0,0,0,.65); }
+.lofi-scene figcaption span { font-size:.77rem; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }
+.lofi-scene figcaption a { color:white; font-size:.78rem; text-decoration:none; opacity:.88; }
+.lofi-scene figcaption a:hover { text-decoration:underline; }
 
 .transition-prompt {
   display: flex;
@@ -335,6 +351,8 @@ button:disabled { cursor: wait; opacity: 0.58; }
   .mood-options { grid-template-columns: 1fr; }
   .dialog-actions { flex-direction: column-reverse; }
   .theme-options { grid-template-columns:repeat(2,1fr); }
+  .lofi-scene { min-height:120px; border-radius:20px; }
+  .lofi-scene figcaption { left:14px; bottom:12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
