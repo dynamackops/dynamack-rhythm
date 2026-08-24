@@ -36,12 +36,26 @@
           </div>
           <div class="topbar-actions">
             <span id="energy-pill" class="energy-pill">🟢 Normal</span>
+            <button id="closeout-button" class="closeout-button" type="button" hidden>Close out the day</button>
             <button id="refresh-button" class="quiet-button" type="button">Refresh</button>
             <button id="signout-button" class="quiet-button" type="button">Sign out</button>
           </div>
         </header>
 
         <p id="dashboard-message" class="message dashboard-message" role="status" aria-live="polite"></p>
+
+        <section id="transition-prompt" class="transition-prompt" aria-live="polite" hidden>
+          <div>
+            <p class="prompt-kicker">A gentle transition</p>
+            <h2 id="transition-title"></h2>
+            <p id="transition-message"></p>
+          </div>
+          <div class="prompt-actions">
+            <button id="prompt-primary" class="complete-button" type="button">Start now</button>
+            <button id="prompt-snooze" class="easier-button" type="button">15 more minutes</button>
+            <button id="prompt-dismiss" class="quiet-button" type="button">Stay here for now</button>
+          </div>
+        </section>
 
         <section class="rhythm-grid" aria-label="Today's rhythm">
           <article class="now-panel panel">
@@ -73,6 +87,7 @@
       <div>
         <p class="chunk-kicker">Stay with this</p>
         <h2 class="now-title"></h2>
+        <p class="chunk-time"></p>
         <p class="transition-cue"></p>
         <div class="now-actions">
           <button class="complete-button" type="button">Complete this chunk</button>
@@ -85,11 +100,31 @@
       <div class="small-chunk">
         <div>
           <h3></h3>
-          <p></p>
+          <p class="small-time"></p>
+          <p class="small-note"></p>
         </div>
         <button class="start-button" type="button">Start</button>
       </div>
     </template>
+
+    <dialog id="closeout-dialog" class="closeout-dialog">
+      <form id="closeout-form" method="dialog">
+        <p class="prompt-kicker">Close out the day</p>
+        <h2>How did today feel?</h2>
+        <p class="closeout-copy">A tiny reflection is enough. Nothing unfinished becomes overdue.</p>
+        <div class="mood-options" role="group" aria-label="How today felt">
+          <button type="button" class="mood-button" data-mood="good">😊 Good</button>
+          <button type="button" class="mood-button" data-mood="meh">😐 Meh</button>
+          <button type="button" class="mood-button" data-mood="hard">😩 Hard</button>
+        </div>
+        <label for="closeout-note">One short note <span>(optional)</span></label>
+        <textarea id="closeout-note" maxlength="280" rows="3" placeholder="Anything you want to remember about today?"></textarea>
+        <div class="dialog-actions">
+          <button id="closeout-cancel" class="quiet-button" type="button">Not yet</button>
+          <button id="closeout-submit" class="complete-button" type="submit" disabled>Close out the day</button>
+        </div>
+      </form>
+    </dialog>
 
     <script type="module" src="./app.js"></script>
   </body>
