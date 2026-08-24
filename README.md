@@ -92,3 +92,5 @@ Supabase publishable keys and browser endpoints are designed to appear in fronte
 ## Current scope
 
 AI is constrained to the places where judgment helps. Deterministic routing, validation, monotonic ease levels, patch limits, and persistence remain in n8n and Supabase.
+
+Deployment refreshed after the Netlify Teams upgrade on August 23, 2026.
