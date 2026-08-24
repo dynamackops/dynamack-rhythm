@@ -31,7 +31,8 @@ const action = String(body.action || 'get_state');
 const allowed = [
   'get_state', 'complete', 'start', 'reset_today', 'make_day', 'make_easier',
   'accept_prompt', 'snooze_prompt', 'dismiss_prompt', 'close_out',
-  'meal_help', 'select_meal', 'pantry_gone'
+  'meal_help', 'select_meal', 'pantry_gone',
+  'toggle_routine', 'swap_cleaning', 'set_theme', 'set_lofi'
 ];
 
 if (!allowed.includes(action)) throw new Error('Unsupported Rhythm action: ' + action);
@@ -47,7 +48,7 @@ if (!supabaseKey) throw new Error('Missing x-supabase-key header.');
 const date = String(body.date || '');
 if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('date must use YYYY-MM-DD.');
 
-let targetUrl = 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_phase4_action';
+let targetUrl = 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_phase6_action';
 let requestBody = {
   p_action: action,
   p_date: date,
@@ -58,6 +59,9 @@ let requestBody = {
   p_effort: null,
   p_meal_id: null,
   p_pantry_item_id: null,
+  p_routine_step_id: body.routineStepId || null,
+  p_theme: typeof body.theme === 'string' ? body.theme : null,
+  p_lofi_enabled: typeof body.lofiEnabled === 'boolean' ? body.lofiEnabled : null,
 };
 
 if (action === 'make_day') {
@@ -150,7 +154,7 @@ const respond = node({
   },
 });
 
-export default workflow('rhythm-agent-router-phase-4', 'Rhythm Agent Router — Phase 4')
+export default workflow('rhythm-agent-router-phase-6', 'Rhythm Agent Router — Routines & Themes')
   .add(actionWebhook)
   .to(normalizeRequest)
   .to(callRoutedAction)
