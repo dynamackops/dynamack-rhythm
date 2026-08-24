@@ -41,6 +41,7 @@ const supabaseKey = headers['x-supabase-key'] || headers['X-Supabase-Key'];
 const action = String(body.action || 'meal_help');
 const date = String(body.date || '');
 const effort = body.effort == null ? null : String(body.effort);
+const mealSlot = body.mealSlot == null ? 'dinner' : String(body.mealSlot);
 
 if (!authorization || !String(authorization).startsWith('Bearer ')) {
   throw new Error('A Supabase user session is required.');
@@ -53,19 +54,19 @@ if (!['meal_help', 'select_meal', 'pantry_gone'].includes(action)) {
 if (effort && !['any', 'no_cook', 'very_easy', 'cook_a_little'].includes(effort)) {
   throw new Error('Unknown meal effort.');
 }
+if (!['breakfast', 'lunch', 'dinner'].includes(mealSlot)) {
+  throw new Error('Unknown meal slot.');
+}
 
 return [{ json: {
   headers: { apikey: String(supabaseKey), Authorization: String(authorization) },
   rpcBody: {
     p_action: action,
     p_date: date,
-    p_chunk_id: null,
-    p_prompt_id: null,
-    p_mood: null,
-    p_note: null,
     p_effort: effort,
     p_meal_id: body.mealId || null,
     p_pantry_item_id: body.pantryItemId || null,
+    p_meal_slot: mealSlot,
   },
 } }];
 `,
@@ -80,7 +81,7 @@ const chooseMeal = node({
     name: 'Filter Available Meals',
     parameters: {
       method: 'POST',
-      url: 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_phase4_action',
+      url: 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_all_day_meal_action',
       authentication: 'none',
       sendHeaders: true,
       specifyHeaders: 'keypair',
