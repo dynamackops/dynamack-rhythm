@@ -112,7 +112,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
 }
 .login-form input:focus { border-color: var(--rose); box-shadow: 0 0 0 4px rgba(201, 120, 120, 0.15); }
 
-.primary-button, .complete-button, .easier-button, .start-button, .quiet-button, .recovery-button, .closeout-button, .meal-help-button, .mood-button, .effort-button, .theme-button, .lofi-button, .routine-toggle, .routine-swap, .theme-option, .conversation-button, .learning-button {
+.primary-button, .complete-button, .easier-button, .start-button, .quiet-button, .recovery-button, .closeout-button, .meal-help-button, .mood-button, .effort-button, .meal-slot-button, .theme-button, .lofi-button, .routine-toggle, .routine-swap, .theme-option, .conversation-button, .learning-button {
   border: 0;
   border-radius: 14px;
   font-weight: 800;
@@ -312,6 +312,13 @@ button:disabled { cursor: wait; opacity: 0.58; }
 .dialog-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .meal-dialog h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1; letter-spacing: -0.05em; }
 .meal-dialog-copy { margin: -4px 0 2px; color: var(--muted); line-height: 1.5; }
+.meal-day-plan { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.meal-day-item { display:grid; gap:4px; padding:12px 14px; border:1px solid var(--line); border-radius:16px; background:var(--soft-surface); }
+.meal-day-item span { color:var(--muted); font-size:.72rem; font-weight:850; letter-spacing:.1em; text-transform:uppercase; }
+.meal-day-item strong { overflow:hidden; font-size:.88rem; line-height:1.25; text-overflow:ellipsis; }
+.meal-slot-options { display:flex; gap:10px; flex-wrap:wrap; }
+.meal-slot-button { padding:11px 14px; border:1px solid var(--line); color:var(--ink); background:var(--soft-surface); }
+.meal-slot-button.selected { border-color:var(--rose-dark); color:var(--rose-dark); background:color-mix(in srgb,var(--rose) 13%,var(--dialog-surface)); box-shadow:0 0 0 3px color-mix(in srgb,var(--rose) 12%,transparent); }
 .effort-options { display: flex; gap: 10px; flex-wrap: wrap; }
 .effort-button { padding: 11px 14px; border: 1px solid var(--line); color: var(--ink); background: white; }
 .effort-button.selected { border-color: var(--sage); color: #4f654f; background: #e7f0e4; box-shadow: 0 0 0 3px rgba(138, 160, 138, 0.12); }
@@ -374,6 +381,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
   .transition-prompt { align-items: flex-start; flex-direction: column; }
   .prompt-actions { justify-content: flex-start; }
   .meal-results { grid-template-columns: 1fr; }
+  .meal-day-plan { grid-template-columns:1fr; }
   .meal-card { min-height: auto; }
   .theme-options { grid-template-columns:repeat(3,1fr); }
 }
