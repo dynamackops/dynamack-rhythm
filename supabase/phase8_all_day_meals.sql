@@ -33,11 +33,6 @@ set meal_slots = case meal_key
   else meal_slots
 end;
 
-create index if not exists daily_plans_breakfast_meal_id_idx
-  on public.daily_plans (breakfast_meal_id);
-create index if not exists daily_plans_lunch_meal_id_idx
-  on public.daily_plans (lunch_meal_id);
-
 create or replace function public.rhythm_meal_state(p_date date)
 returns jsonb
 language plpgsql
