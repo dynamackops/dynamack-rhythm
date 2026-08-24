@@ -30,7 +30,8 @@ const headers = input.headers || {};
 const action = String(body.action || 'get_state');
 const allowed = [
   'get_state', 'complete', 'start', 'reset_today', 'make_day', 'make_easier',
-  'accept_prompt', 'snooze_prompt', 'dismiss_prompt', 'close_out'
+  'accept_prompt', 'snooze_prompt', 'dismiss_prompt', 'close_out',
+  'meal_help', 'select_meal', 'pantry_gone'
 ];
 
 if (!allowed.includes(action)) throw new Error('Unsupported Rhythm action: ' + action);
@@ -46,7 +47,7 @@ if (!supabaseKey) throw new Error('Missing x-supabase-key header.');
 const date = String(body.date || '');
 if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('date must use YYYY-MM-DD.');
 
-let targetUrl = 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_phase5_action';
+let targetUrl = 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_phase4_action';
 let requestBody = {
   p_action: action,
   p_date: date,
@@ -54,6 +55,9 @@ let requestBody = {
   p_prompt_id: body.promptId || null,
   p_mood: null,
   p_note: null,
+  p_effort: null,
+  p_meal_id: null,
+  p_pantry_item_id: null,
 };
 
 if (action === 'make_day') {
@@ -72,6 +76,15 @@ if (action === 'make_day') {
     promptId: body.promptId || null,
     mood: typeof body.mood === 'string' ? body.mood : null,
     note: typeof body.note === 'string' ? body.note.trim().slice(0, 280) : null,
+  };
+} else if (['meal_help', 'select_meal', 'pantry_gone'].includes(action)) {
+  targetUrl = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/meal-help';
+  requestBody = {
+    action,
+    date,
+    effort: typeof body.effort === 'string' ? body.effort : null,
+    mealId: body.mealId || null,
+    pantryItemId: body.pantryItemId || null,
   };
 }
 
@@ -137,7 +150,7 @@ const respond = node({
   },
 });
 
-export default workflow('rhythm-agent-router-phase-5', 'Rhythm Agent Router — Phase 5')
+export default workflow('rhythm-agent-router-phase-4', 'Rhythm Agent Router — Phase 4')
   .add(actionWebhook)
   .to(normalizeRequest)
   .to(callRoutedAction)
