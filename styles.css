@@ -97,7 +97,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
 }
 .login-form input:focus { border-color: var(--rose); box-shadow: 0 0 0 4px rgba(201, 120, 120, 0.15); }
 
-.primary-button, .complete-button, .easier-button, .start-button, .quiet-button, .recovery-button, .closeout-button, .mood-button {
+.primary-button, .complete-button, .easier-button, .start-button, .quiet-button, .recovery-button, .closeout-button, .meal-help-button, .mood-button, .effort-button {
   border: 0;
   border-radius: 14px;
   font-weight: 800;
@@ -109,6 +109,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
 .easier-button:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.9); }
 .quiet-button { padding: 10px 14px; color: var(--ink); background: rgba(255, 255, 255, 0.66); }
 .closeout-button { padding: 10px 14px; color: white; background: var(--rose-dark); }
+.meal-help-button { max-width: 330px; padding: 10px 14px; overflow: hidden; color: #4f654f; background: #e7f0e4; text-overflow: ellipsis; white-space: nowrap; }
 .start-button { flex: 0 0 auto; padding: 9px 13px; color: var(--rose-dark); background: #f7e8e7; }
 .recovery-button { margin-top: 28px; padding: 10px 14px; border: 1px solid var(--line); color: var(--muted); background: rgba(255, 255, 255, 0.5); }
 .recovery-button:hover { color: var(--ink); background: rgba(255, 255, 255, 0.82); }
@@ -190,7 +191,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
 
 .footer-note { display: flex; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 0 8px; color: var(--muted); font-size: 0.9rem; }
 
-.closeout-dialog {
+.closeout-dialog, .meal-dialog {
   width: min(560px, calc(100% - 28px));
   padding: 0;
   border: 1px solid var(--line);
@@ -199,7 +200,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
   background: #fffaf6;
   box-shadow: 0 34px 90px rgba(58, 42, 34, 0.25);
 }
-.closeout-dialog::backdrop { background: rgba(45, 41, 38, 0.38); backdrop-filter: blur(5px); }
+.closeout-dialog::backdrop, .meal-dialog::backdrop { background: rgba(45, 41, 38, 0.38); backdrop-filter: blur(5px); }
 .closeout-dialog form { display: grid; gap: 18px; padding: clamp(26px, 5vw, 44px); }
 .closeout-dialog h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1; letter-spacing: -0.05em; }
 .closeout-copy { margin: -4px 0 4px; color: var(--muted); line-height: 1.5; }
@@ -211,6 +212,23 @@ button:disabled { cursor: wait; opacity: 0.58; }
 .closeout-dialog textarea { width: 100%; resize: vertical; padding: 14px 15px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: white; outline: none; }
 .closeout-dialog textarea:focus { border-color: var(--rose); box-shadow: 0 0 0 4px rgba(201, 120, 120, 0.15); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+.meal-dialog { width: min(820px, calc(100% - 28px)); }
+.meal-dialog-content { display: grid; gap: 18px; padding: clamp(26px, 5vw, 44px); }
+.dialog-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.meal-dialog h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1; letter-spacing: -0.05em; }
+.meal-dialog-copy { margin: -4px 0 2px; color: var(--muted); line-height: 1.5; }
+.effort-options { display: flex; gap: 10px; flex-wrap: wrap; }
+.effort-button { padding: 11px 14px; border: 1px solid var(--line); color: var(--ink); background: white; }
+.effort-button.selected { border-color: var(--sage); color: #4f654f; background: #e7f0e4; box-shadow: 0 0 0 3px rgba(138, 160, 138, 0.12); }
+.meal-results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.meal-card { display: flex; min-height: 330px; flex-direction: column; justify-content: space-between; gap: 20px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: white; }
+.meal-card h3 { margin: 4px 0 10px; font-size: 1.35rem; line-height: 1.08; letter-spacing: -0.035em; }
+.meal-meta { margin: 0; color: var(--rose-dark); font-size: 0.78rem; font-weight: 850; text-transform: uppercase; }
+.meal-ingredients, .meal-instructions, .meal-support { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; line-height: 1.45; }
+.meal-ingredients { color: var(--ink); font-weight: 750; }
+.meal-support { color: #617361; font-weight: 750; }
+.meal-card .complete-button { align-self: flex-start; }
 
 @media (min-width: 1600px) {
   .shell { width: min(1720px, calc(100% - 72px)); }
@@ -227,6 +245,8 @@ button:disabled { cursor: wait; opacity: 0.58; }
   .footer-note { flex-direction: column; }
   .transition-prompt { align-items: flex-start; flex-direction: column; }
   .prompt-actions { justify-content: flex-start; }
+  .meal-results { grid-template-columns: 1fr; }
+  .meal-card { min-height: auto; }
 }
 
 @media (max-width: 520px) {
@@ -237,6 +257,7 @@ button:disabled { cursor: wait; opacity: 0.58; }
   .now-title { font-size: clamp(3.5rem, 21vw, 6.2rem); }
   .topbar-actions { width: 100%; }
   .energy-pill { width: 100%; }
+  .meal-help-button { width: 100%; max-width: none; }
   .quiet-button { flex: 1; }
   .mood-options { grid-template-columns: 1fr; }
   .dialog-actions { flex-direction: column-reverse; }
