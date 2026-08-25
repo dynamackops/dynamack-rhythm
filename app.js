@@ -315,7 +315,13 @@ function renderMealButton() {
     lunch: state?.lunchChoice || null,
     dinner: state?.dinnerChoice || null,
   };
-  const chosen = ['breakfast', 'lunch', 'dinner'].filter((slot) => plan[slot]).length;
+  const loggedSlots = new Set(
+    (state?.foodLog?.todayEntries || [])
+      .map((entry) => entry.slot)
+      .filter((slot) => ['breakfast', 'lunch', 'dinner'].includes(slot)),
+  );
+  const chosen = ['breakfast', 'lunch', 'dinner']
+    .filter((slot) => plan[slot] || loggedSlots.has(slot)).length;
   mealHelpButton.textContent = chosen ? `🍽️ Meals: ${chosen} of 3` : '🍽️ Plan my meals';
   mealHelpButton.title = chosen
     ? 'See meal plans or log what you actually ate.'
@@ -329,13 +335,23 @@ function mealSlotLabel(slot) {
 function renderMealDayPlan() {
   mealDayPlan.replaceChildren();
   const plan = state?.mealPlan || {};
+  const entries = Array.isArray(state?.foodLog?.todayEntries) ? state.foodLog.todayEntries : [];
   ['breakfast', 'lunch', 'dinner'].forEach((slot) => {
+    const logged = entries.filter((entry) => entry.slot === slot);
+    const latest = logged[logged.length - 1];
     const item = document.createElement('div');
     item.className = 'meal-day-item';
     const label = document.createElement('span');
-    label.textContent = mealSlotLabel(slot);
+    label.textContent = `${mealSlotLabel(slot)}${latest ? ' · Logged' : plan[slot] ? ' · Planned' : ''}`;
     const choice = document.createElement('strong');
-    choice.textContent = plan[slot]?.title || 'Still open';
+    if (latest) {
+      const place = latest.placeName ? ` · ${latest.placeName}` : '';
+      const more = logged.length > 1 ? ` +${logged.length - 1} more` : '';
+      choice.textContent = `${latest.foodName}${place}${more}`;
+      if (plan[slot]?.title) item.title = `Planned: ${plan[slot].title}`;
+    } else {
+      choice.textContent = plan[slot]?.title || 'Still open';
+    }
     item.append(label, choice);
     mealDayPlan.append(item);
   });
@@ -504,6 +520,7 @@ function renderState() {
   energyPill.textContent = energyLabels[state.energyMode] || energyLabels.normal;
   applyTheme(state.theme || savedTheme || 'blush');
   renderMealButton();
+  renderMealDayPlan();
   renderFoodLog();
   closeoutButton.hidden = !state.closeOut?.available;
   renderTransitionPrompt();
