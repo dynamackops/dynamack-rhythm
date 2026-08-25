@@ -54,6 +54,18 @@ Phase 4 adds low-friction food support without turning the pantry into another c
 - saves each choice to today so the decision does not need to be made twice
 - starts with nine personal meals built around the current groceries and available appliances
 
+## Gentle food log
+
+Rhythm keeps meal planning separate from what actually happened:
+
+- type any breakfast, lunch, dinner, or snack without adding it to the pantry first
+- optionally mark food as **Home / groceries** or **Ate out / ordered**, with a place name
+- keep multiple snack entries on the same day
+- remove an entry if it was a typo
+- remember repeated foods only after they appear on more than one day
+- feed supported favorite/source patterns into **Your rhythm lately**
+- never track calories, scores, streaks, or “good” versus “bad” food
+
 ## Phase 5
 
 Phase 5 adds time awareness without turning Rhythm into a rigid schedule:
@@ -109,6 +121,7 @@ The dashboard now includes one lightweight **“Tell Rhythm what’s going on”
 - `supabase/phase4_meal_chooser.sql`: grocery imports, loose pantry state, meal library, and dinner selection
 - `supabase/phase7_conversation_learning.sql`: narrow energy action and read-only learning aggregates
 - `supabase/phase8_all_day_meals.sql`: slot-aware meal library, all-day meal persistence, and authenticated meal actions
+- `supabase/phase9_food_log.sql`: private actual-food log, repeated favorites, and deterministic food-pattern evidence
 - `n8n/rhythm-router.ts`: validated Workflow SDK source
 - `n8n/rhythm-build-my-day.ts`: validated Build My Day Workflow SDK source
 - `n8n/rhythm-adapt-my-day.ts`: validated Adapt My Day Workflow SDK source
