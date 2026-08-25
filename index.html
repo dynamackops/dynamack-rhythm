@@ -194,9 +194,9 @@
         <div id="meal-day-plan" class="meal-day-plan" aria-label="Today’s meal choices"></div>
         <section class="food-log-section" aria-labelledby="food-log-title">
           <div>
-            <p class="prompt-kicker">What actually happened</p>
-            <h3 id="food-log-title">Log a meal or snack</h3>
-            <p class="food-log-copy">Home food, takeout, restaurant food—just type it. No calories or scoring.</p>
+            <p class="prompt-kicker">Only when plans change</p>
+            <h3 id="food-log-title">Log a change or snack</h3>
+            <p class="food-log-copy">Your chosen meals already count. Use this only if you ate something different or added a snack.</p>
           </div>
           <form id="food-log-form" class="food-log-form">
             <label>
@@ -223,12 +223,12 @@
               <span>Place <small>(optional)</small></span>
               <input id="food-place-name" type="text" maxlength="80" placeholder="Restaurant or store" autocomplete="off" />
             </label>
-            <button class="complete-button" type="submit">Add to today</button>
+            <button class="complete-button" type="submit">Save change</button>
           </form>
           <p id="food-log-message" class="food-log-message" aria-live="polite"></p>
           <div class="food-log-columns">
             <div>
-              <h4>Today’s food</h4>
+              <h4>Changes & snacks</h4>
               <div id="food-log-today" class="food-log-list"></div>
             </div>
             <div>
@@ -257,6 +257,6 @@
       </div>
     </dialog>
 
-    <script type="module" src="./app.js?v=11"></script>
+    <script type="module" src="./app.js?v=12"></script>
   </body>
 </html>
