@@ -342,7 +342,7 @@ function renderMealDayPlan() {
     const item = document.createElement('div');
     item.className = 'meal-day-item';
     const label = document.createElement('span');
-    label.textContent = `${mealSlotLabel(slot)}${latest ? ' · Logged' : plan[slot] ? ' · Planned' : ''}`;
+    label.textContent = `${mealSlotLabel(slot)}${latest ? ' · Changed' : plan[slot] ? ' · Chosen' : ''}`;
     const choice = document.createElement('strong');
     if (latest) {
       const place = latest.placeName ? ` · ${latest.placeName}` : '';
@@ -375,7 +375,7 @@ function renderFoodLog() {
   if (!entries.length) {
     const empty = document.createElement('p');
     empty.className = 'food-log-empty';
-    empty.textContent = 'Nothing logged yet. This is memory support, not homework.';
+    empty.textContent = 'No changes or snacks logged. Your chosen meals already count.';
     foodLogToday.append(empty);
   } else {
     entries.forEach((entry) => {
