@@ -33,7 +33,7 @@ return [{ json: {
 const loadAggregates = node({
   type: 'n8n-nodes-base.httpRequest', version: 4.5,
   config: { name: 'Calculate Deterministic Patterns', parameters: {
-    method: 'POST', url: 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_learning_context',
+    method: 'POST', url: 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_learning_context_v2',
     authentication: 'none', sendHeaders: true, specifyHeaders: 'keypair',
     headerParameters: { parameters: [
       { name: 'apikey', value: expr('{{ $json.headers.apikey }}') },
