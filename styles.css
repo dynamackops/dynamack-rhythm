@@ -316,6 +316,29 @@ button:disabled { cursor: wait; opacity: 0.58; }
 .meal-day-item { display:grid; gap:4px; padding:12px 14px; border:1px solid var(--line); border-radius:16px; background:var(--soft-surface); }
 .meal-day-item span { color:var(--muted); font-size:.72rem; font-weight:850; letter-spacing:.1em; text-transform:uppercase; }
 .meal-day-item strong { overflow:hidden; font-size:.88rem; line-height:1.25; text-overflow:ellipsis; }
+.food-log-section { display:grid; gap:14px; padding:20px; border:1px solid var(--line); border-radius:22px; background:color-mix(in srgb,var(--sage) 10%,var(--dialog-surface)); }
+.food-log-section h3, .meal-planner-heading h3 { margin:2px 0 0; font-size:1.35rem; letter-spacing:-.03em; }
+.food-log-copy { margin:5px 0 0; color:var(--muted); font-size:.92rem; line-height:1.4; }
+.food-log-form { display:grid; grid-template-columns:130px minmax(180px,1fr) 165px auto; gap:10px; align-items:end; }
+.food-log-form label { display:grid; gap:6px; color:var(--ink); font-size:.76rem; font-weight:850; }
+.food-log-form label span { letter-spacing:.04em; }
+.food-log-form small { color:var(--muted); font-weight:650; }
+.food-log-form input, .food-log-form select { width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--line); border-radius:13px; color:var(--ink); background:var(--dialog-surface); font:inherit; outline:none; }
+.food-log-form input:focus, .food-log-form select:focus { border-color:var(--rose); box-shadow:0 0 0 3px color-mix(in srgb,var(--rose) 15%,transparent); }
+.food-log-form .complete-button { min-height:44px; white-space:nowrap; }
+.food-log-message { min-height:1.2em; margin:0; color:var(--rose-dark); font-size:.88rem; font-weight:750; }
+.food-log-columns { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding-top:4px; }
+.food-log-columns h4 { margin:0 0 8px; font-size:.82rem; letter-spacing:.06em; text-transform:uppercase; }
+.food-log-list { display:grid; gap:7px; }
+.food-log-entry { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 11px; border:1px solid var(--line); border-radius:13px; background:var(--dialog-surface); }
+.food-log-entry div { display:grid; gap:2px; min-width:0; }
+.food-log-entry span { color:var(--muted); font-size:.68rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.food-log-entry strong { overflow:hidden; font-size:.88rem; text-overflow:ellipsis; }
+.food-log-remove { flex:none; padding:7px 9px; border:0; color:var(--rose-dark); background:transparent; font-size:.74rem; font-weight:800; }
+.food-favorites { display:flex; gap:7px; flex-wrap:wrap; align-content:flex-start; }
+.favorite-food-chip { padding:8px 10px; border:1px solid var(--sage); border-radius:999px; color:#4f654f; background:#e7f0e4; font-size:.78rem; font-weight:800; }
+.food-log-empty { margin:0; color:var(--muted); font-size:.84rem; line-height:1.4; }
+.meal-planner-heading { margin-top:4px; }
 .meal-slot-options { display:flex; gap:10px; flex-wrap:wrap; }
 .meal-slot-button { padding:11px 14px; border:1px solid var(--line); color:var(--ink); background:var(--soft-surface); }
 .meal-slot-button.selected { border-color:var(--rose-dark); color:var(--rose-dark); background:color-mix(in srgb,var(--rose) 13%,var(--dialog-surface)); box-shadow:0 0 0 3px color-mix(in srgb,var(--rose) 12%,transparent); }
@@ -351,6 +374,9 @@ button:disabled { cursor: wait; opacity: 0.58; }
 :root[data-theme="dark"] .mood-button,
 :root[data-theme="dark"] .effort-button,
 :root[data-theme="dark"] .meal-card,
+:root[data-theme="dark"] .food-log-entry,
+:root[data-theme="dark"] .food-log-form input,
+:root[data-theme="dark"] .food-log-form select,
 :root[data-theme="dark"] .login-form input,
 :root[data-theme="dark"] .closeout-dialog textarea { color:var(--ink); background:rgba(255,255,255,.08); }
 :root[data-theme="dark"] .meal-help-button { border-color:#789178; color:#d9ecd7; background:#354536; }
@@ -382,6 +408,8 @@ button:disabled { cursor: wait; opacity: 0.58; }
   .prompt-actions { justify-content: flex-start; }
   .meal-results { grid-template-columns: 1fr; }
   .meal-day-plan { grid-template-columns:1fr; }
+  .food-log-form { grid-template-columns:1fr; }
+  .food-log-columns { grid-template-columns:1fr; }
   .meal-card { min-height: auto; }
   .theme-options { grid-template-columns:repeat(3,1fr); }
 }
