@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f4eee6" />
     <meta name="description" content="A visual daily rhythm system that makes NOW, NEXT, and LATER visible." />
     <title>Rhythm Agent</title>
-    <link rel="stylesheet" href="./styles.css?v=9" />
+    <link rel="stylesheet" href="./styles.css?v=10" />
   </head>
   <body data-rhythm-phase="6">
     <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -192,6 +192,55 @@
         </div>
         <p class="meal-dialog-copy">Choose a part of the day. Only meals you can make with what you have will appear.</p>
         <div id="meal-day-plan" class="meal-day-plan" aria-label="Today’s meal choices"></div>
+        <section class="food-log-section" aria-labelledby="food-log-title">
+          <div>
+            <p class="prompt-kicker">What actually happened</p>
+            <h3 id="food-log-title">Log a meal or snack</h3>
+            <p class="food-log-copy">Home food, takeout, restaurant food—just type it. No calories or scoring.</p>
+          </div>
+          <form id="food-log-form" class="food-log-form">
+            <label>
+              <span>Part of day</span>
+              <select id="food-log-slot" required>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
+              </select>
+            </label>
+            <label class="food-name-field">
+              <span>What did you eat?</span>
+              <input id="food-log-name" type="text" maxlength="120" placeholder="Thai tuna over rice…" autocomplete="off" required />
+            </label>
+            <label>
+              <span>Where?</span>
+              <select id="food-log-source">
+                <option value="home">Home / groceries</option>
+                <option value="eat_out">Ate out / ordered</option>
+              </select>
+            </label>
+            <label id="food-place-wrap" hidden>
+              <span>Place <small>(optional)</small></span>
+              <input id="food-place-name" type="text" maxlength="80" placeholder="Restaurant or store" autocomplete="off" />
+            </label>
+            <button class="complete-button" type="submit">Add to today</button>
+          </form>
+          <p id="food-log-message" class="food-log-message" aria-live="polite"></p>
+          <div class="food-log-columns">
+            <div>
+              <h4>Today’s food</h4>
+              <div id="food-log-today" class="food-log-list"></div>
+            </div>
+            <div>
+              <h4>Remembered favorites</h4>
+              <div id="food-log-favorites" class="food-favorites"></div>
+            </div>
+          </div>
+        </section>
+        <div class="meal-planner-heading">
+          <p class="prompt-kicker">Need an idea?</p>
+          <h3>Plan a meal</h3>
+        </div>
         <div class="meal-slot-options" role="group" aria-label="Meal time">
           <button type="button" class="meal-slot-button" data-meal-slot="breakfast">☀️ Breakfast</button>
           <button type="button" class="meal-slot-button" data-meal-slot="lunch">🌤️ Lunch</button>
@@ -208,6 +257,6 @@
       </div>
     </dialog>
 
-    <script type="module" src="./app.js?v=9"></script>
+    <script type="module" src="./app.js?v=10"></script>
   </body>
 </html>
