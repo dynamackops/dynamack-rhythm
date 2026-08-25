@@ -31,7 +31,7 @@ const action = String(body.action || 'get_state');
 const allowed = [
   'get_state', 'complete', 'start', 'reset_today', 'make_day', 'make_easier',
   'accept_prompt', 'snooze_prompt', 'dismiss_prompt', 'close_out',
-  'meal_help', 'select_meal', 'pantry_gone',
+  'meal_help', 'select_meal', 'pantry_gone', 'log_food', 'delete_food_log',
   'toggle_routine', 'swap_cleaning', 'set_theme', 'set_lofi'
 ];
 
@@ -81,7 +81,7 @@ if (action === 'make_day') {
     mood: typeof body.mood === 'string' ? body.mood : null,
     note: typeof body.note === 'string' ? body.note.trim().slice(0, 280) : null,
   };
-} else if (['meal_help', 'select_meal', 'pantry_gone'].includes(action)) {
+} else if (['meal_help', 'select_meal', 'pantry_gone', 'log_food', 'delete_food_log'].includes(action)) {
   targetUrl = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/meal-help';
   requestBody = {
     action,
@@ -90,6 +90,11 @@ if (action === 'make_day') {
     mealId: body.mealId || null,
     mealSlot: typeof body.mealSlot === 'string' ? body.mealSlot : 'dinner',
     pantryItemId: body.pantryItemId || null,
+    foodName: typeof body.foodName === 'string' ? body.foodName.trim().slice(0, 120) : null,
+    foodSlot: typeof body.foodSlot === 'string' ? body.foodSlot : null,
+    source: typeof body.source === 'string' ? body.source : 'home',
+    placeName: typeof body.placeName === 'string' ? body.placeName.trim().slice(0, 80) : null,
+    logId: body.logId || null,
   };
 }
 
