@@ -325,13 +325,31 @@ begin
       ) as evidence,
       count(*) as strength
     from recent
+    where source = 'eat_out'
     group by source
     having count(*) >= 3 and count(distinct log_date) >= 2
+  ),
+  place_patterns as (
+    select
+      'food_place_' || md5(lower(place_name)) as pattern_id,
+      'food_place' as kind,
+      jsonb_build_object(
+        'placeName', (array_agg(place_name order by occurred_at desc))[1],
+        'timesLogged', count(*)::integer,
+        'daysLogged', count(distinct log_date)::integer
+      ) as evidence,
+      count(*) as strength
+    from recent
+    where source = 'eat_out' and place_name is not null
+    group by lower(place_name)
+    having count(*) >= 2 and count(distinct log_date) >= 2
   ),
   candidates as (
     select * from favorite_patterns
     union all
     select * from source_patterns
+    union all
+    select * from place_patterns
   )
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', pattern_id, 'kind', kind, 'evidence', evidence
