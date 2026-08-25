@@ -42,30 +42,45 @@ const action = String(body.action || 'meal_help');
 const date = String(body.date || '');
 const effort = body.effort == null ? null : String(body.effort);
 const mealSlot = body.mealSlot == null ? 'dinner' : String(body.mealSlot);
+const foodSlot = body.foodSlot == null ? null : String(body.foodSlot);
+const foodName = body.foodName == null ? null : String(body.foodName).trim().slice(0, 120);
+const source = body.source == null ? 'home' : String(body.source);
+const placeName = body.placeName == null ? null : String(body.placeName).trim().slice(0, 80);
 
 if (!authorization || !String(authorization).startsWith('Bearer ')) {
   throw new Error('A Supabase user session is required.');
 }
 if (!supabaseKey) throw new Error('Missing x-supabase-key header.');
 if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('date must use YYYY-MM-DD.');
-if (!['meal_help', 'select_meal', 'pantry_gone'].includes(action)) {
+if (!['meal_help', 'select_meal', 'pantry_gone', 'log_food', 'delete_food_log'].includes(action)) {
   throw new Error('Unsupported meal action: ' + action);
 }
 if (effort && !['any', 'no_cook', 'very_easy', 'cook_a_little'].includes(effort)) {
   throw new Error('Unknown meal effort.');
 }
-if (!['breakfast', 'lunch', 'dinner'].includes(mealSlot)) {
+if (['meal_help', 'select_meal', 'pantry_gone'].includes(action) && !['breakfast', 'lunch', 'dinner'].includes(mealSlot)) {
   throw new Error('Unknown meal slot.');
 }
+if (action === 'log_food' && !['breakfast', 'lunch', 'dinner', 'snack'].includes(foodSlot)) {
+  throw new Error('Choose breakfast, lunch, dinner, or snack.');
+}
+if (action === 'log_food' && !foodName) throw new Error('Type what you ate first.');
+if (action === 'log_food' && !['home', 'eat_out'].includes(source)) throw new Error('Unknown food source.');
+
+const isFoodLog = ['log_food', 'delete_food_log'].includes(action);
 
 return [{ json: {
   headers: { apikey: String(supabaseKey), Authorization: String(authorization) },
-  rpcBody: {
-    p_action: action,
-    p_date: date,
-    p_effort: effort,
+  targetUrl: isFoodLog
+    ? 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_food_log_action'
+    : 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_all_day_meal_action',
+  rpcBody: isFoodLog ? {
+    p_action: action, p_date: date, p_food_name: foodName, p_food_slot: foodSlot,
+    p_source: source, p_place_name: placeName, p_log_id: body.logId || null,
     p_meal_id: body.mealId || null,
-    p_pantry_item_id: body.pantryItemId || null,
+  } : {
+    p_action: action, p_date: date, p_effort: effort,
+    p_meal_id: body.mealId || null, p_pantry_item_id: body.pantryItemId || null,
     p_meal_slot: mealSlot,
   },
 } }];
@@ -81,7 +96,7 @@ const chooseMeal = node({
     name: 'Filter Available Meals',
     parameters: {
       method: 'POST',
-      url: 'https://yipznshcsgrqdzbcthjw.supabase.co/rest/v1/rpc/rhythm_all_day_meal_action',
+      url: expr('{{ $json.targetUrl }}'),
       authentication: 'none',
       sendHeaders: true,
       specifyHeaders: 'keypair',
