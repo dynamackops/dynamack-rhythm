@@ -36,6 +36,15 @@ const mealDialog = document.querySelector('#meal-dialog');
 const mealClose = document.querySelector('#meal-close');
 const mealResults = document.querySelector('#meal-results');
 const mealDayPlan = document.querySelector('#meal-day-plan');
+const foodLogForm = document.querySelector('#food-log-form');
+const foodLogSlot = document.querySelector('#food-log-slot');
+const foodLogName = document.querySelector('#food-log-name');
+const foodLogSource = document.querySelector('#food-log-source');
+const foodPlaceWrap = document.querySelector('#food-place-wrap');
+const foodPlaceName = document.querySelector('#food-place-name');
+const foodLogMessage = document.querySelector('#food-log-message');
+const foodLogToday = document.querySelector('#food-log-today');
+const foodLogFavorites = document.querySelector('#food-log-favorites');
 const transitionPrompt = document.querySelector('#transition-prompt');
 const transitionTitle = document.querySelector('#transition-title');
 const transitionMessage = document.querySelector('#transition-message');
@@ -309,12 +318,12 @@ function renderMealButton() {
   const chosen = ['breakfast', 'lunch', 'dinner'].filter((slot) => plan[slot]).length;
   mealHelpButton.textContent = chosen ? `🍽️ Meals: ${chosen} of 3` : '🍽️ Plan my meals';
   mealHelpButton.title = chosen
-    ? 'See or change breakfast, lunch, and dinner.'
-    : 'Get a few small meal choices from what is available.';
+    ? 'See meal plans or log what you actually ate.'
+    : 'Plan meals or log what you actually ate.';
 }
 
 function mealSlotLabel(slot) {
-  return { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' }[slot] || 'Meal';
+  return { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack' }[slot] || 'Meal';
 }
 
 function renderMealDayPlan() {
@@ -330,6 +339,71 @@ function renderMealDayPlan() {
     item.append(label, choice);
     mealDayPlan.append(item);
   });
+}
+
+function defaultFoodLogSlot() {
+  const hour = easternHour();
+  if (hour < 11) return 'breakfast';
+  if (hour < 15) return 'lunch';
+  if (hour < 18) return 'snack';
+  return 'dinner';
+}
+
+function renderFoodLog() {
+  const log = state?.foodLog || {};
+  const entries = Array.isArray(log.todayEntries) ? log.todayEntries : [];
+  const favorites = Array.isArray(log.favorites) ? log.favorites : [];
+  foodLogToday.replaceChildren();
+  foodLogFavorites.replaceChildren();
+
+  if (!entries.length) {
+    const empty = document.createElement('p');
+    empty.className = 'food-log-empty';
+    empty.textContent = 'Nothing logged yet. This is memory support, not homework.';
+    foodLogToday.append(empty);
+  } else {
+    entries.forEach((entry) => {
+      const row = document.createElement('div');
+      row.className = 'food-log-entry';
+      const copy = document.createElement('div');
+      const label = document.createElement('span');
+      label.textContent = `${mealSlotLabel(entry.slot)}${entry.source === 'eat_out' ? ' · Ate out' : ''}`;
+      const name = document.createElement('strong');
+      name.textContent = `${entry.foodName}${entry.placeName ? ` · ${entry.placeName}` : ''}`;
+      copy.append(label, name);
+      const remove = document.createElement('button');
+      remove.className = 'food-log-remove';
+      remove.type = 'button';
+      remove.textContent = 'Remove';
+      remove.setAttribute('aria-label', `Remove ${entry.foodName} from today’s food log`);
+      remove.addEventListener('click', async () => {
+        await runAction('delete_food_log', null, { logId: entry.id });
+        foodLogMessage.textContent = state?.foodLogChange?.message || '';
+      });
+      row.append(copy, remove);
+      foodLogToday.append(row);
+    });
+  }
+
+  if (!favorites.length) {
+    const empty = document.createElement('p');
+    empty.className = 'food-log-empty';
+    empty.textContent = log.message || 'Favorites will appear after they repeat on more than one day.';
+    foodLogFavorites.append(empty);
+  } else {
+    favorites.forEach((favorite) => {
+      const button = document.createElement('button');
+      button.className = 'favorite-food-chip';
+      button.type = 'button';
+      button.textContent = favorite.foodName;
+      button.title = 'Use this name in a new food entry';
+      button.addEventListener('click', () => {
+        foodLogName.value = favorite.foodName;
+        foodLogName.focus();
+      });
+      foodLogFavorites.append(button);
+    });
+  }
 }
 
 function easternHour() {
@@ -430,6 +504,7 @@ function renderState() {
   energyPill.textContent = energyLabels[state.energyMode] || energyLabels.normal;
   applyTheme(state.theme || savedTheme || 'blush');
   renderMealButton();
+  renderFoodLog();
   closeoutButton.hidden = !state.closeOut?.available;
   renderTransitionPrompt();
 
@@ -522,6 +597,8 @@ async function runAction(action, chunkId = null, extra = {}) {
     dismiss_prompt: 'Staying here for now…',
     close_out: 'Closing out the day gently…',
     select_meal: 'Saving one less decision for later…',
+    log_food: 'Saving that food memory…',
+    delete_food_log: 'Removing that food entry…',
     toggle_routine: 'Saving that tiny win…',
     swap_cleaning: 'Finding a different tiny reset…',
     set_theme: 'Changing the color mood…',
@@ -581,10 +658,44 @@ lofiButton.addEventListener('click', async () => {
 mealHelpButton.addEventListener('click', () => {
   mealDialog.showModal();
   selectMealSlot(defaultMealSlot());
+  foodLogSlot.value = defaultFoodLogSlot();
   renderMealDayPlan();
+  renderFoodLog();
   requestMeals(effortForEnergy(), selectedMealSlot);
 });
 mealClose.addEventListener('click', () => mealDialog.close());
+foodLogSource.addEventListener('change', () => {
+  const eatingOut = foodLogSource.value === 'eat_out';
+  foodPlaceWrap.hidden = !eatingOut;
+  if (!eatingOut) foodPlaceName.value = '';
+});
+foodLogForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (busy) return;
+  const foodName = foodLogName.value.trim();
+  if (!foodName) return;
+  setBusy(true, 'Saving that food memory…');
+  foodLogMessage.textContent = '';
+  try {
+    const payload = await callRhythm('log_food', null, {
+      foodName,
+      foodSlot: foodLogSlot.value,
+      source: foodLogSource.value,
+      placeName: foodPlaceName.value.trim() || null,
+    });
+    state = { ...state, ...payload };
+    renderState();
+    foodLogName.value = '';
+    foodPlaceName.value = '';
+    foodLogMessage.textContent = state.foodLogChange?.message || 'Saved.';
+    dashboardMessage.textContent = '';
+  } catch (error) {
+    console.error(error);
+    foodLogMessage.textContent = error.message || 'That food entry did not save.';
+  } finally {
+    setBusy(false);
+  }
+});
 document.querySelectorAll('.meal-slot-button').forEach((button) => {
   button.addEventListener('click', () => {
     selectMealSlot(button.dataset.mealSlot);
