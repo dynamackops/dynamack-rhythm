@@ -158,3 +158,7 @@ The receipt importer previews the latest matching Instacart Aldi receipt and let
 
 Before enabling the feature, review and apply `supabase/phase11_instacart_receipts.sql` to the Rhythm Supabase project, configure `RHYTHM_RECEIPT_IMPORT_URL` in `config.js`, and publish the owner-authenticated `Rhythm Agent — Aldi Receipt Preview` workflow in n8n. The workflow must remain restricted to the Rhythm owner and the receipt search should only process Instacart Aldi receipts. Do not put service-role credentials in browser config. Duplicate receipt references are ignored by the database function.
 
+
+## Receipt source preference
+
+The preview prefers the newest receipt email sent directly by ALDI (`shop.aldi.us`) and falls back to the newest Instacart ALDI receipt. Each preview shows which email source it came from. The n8n parser is maintained in `n8n/rhythm-aldi-receipt-preview.js`; its owner-only authentication gate stays configured in the private n8n workflow.

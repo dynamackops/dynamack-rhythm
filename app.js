@@ -716,7 +716,8 @@ function renderReceiptPreview() {
   receiptSaveButton.disabled = true;
   if (!receiptPreview) return;
   normalizedReceiptItems = normalizeReceiptItems(receiptPreview.items);
-  receiptMeta.textContent = 'Latest Instacart Aldi receipt' + (receiptPreview.purchasedOn ? ' · ' + receiptPreview.purchasedOn : '');
+  const sourceLabel = receiptPreview.source === 'aldi_email' ? 'Latest emailed ALDI receipt' : 'Latest Instacart ALDI receipt';
+  receiptMeta.textContent = sourceLabel + (receiptPreview.purchasedOn ? ' · ' + receiptPreview.purchasedOn : '');
   for (const item of normalizedReceiptItems) {
     const row = document.createElement('label');
     row.className = 'receipt-item-row';
