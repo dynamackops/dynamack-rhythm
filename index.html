@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f4eee6" />
     <meta name="description" content="A visual daily rhythm system that makes NOW, NEXT, and LATER visible." />
     <title>Rhythm Agent</title>
-    <link rel="stylesheet" href="./styles.css?v=11" />
+    <link rel="stylesheet" href="./styles.css?v=12" />
   </head>
   <body data-rhythm-phase="6">
     <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -59,6 +59,28 @@
             <button class="conversation-button" type="submit">Tell Rhythm</button>
           </form>
           <p id="rhythm-chat-response" class="conversation-response" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="calendar-panel panel" aria-labelledby="calendar-title">
+          <div class="calendar-heading">
+            <div>
+              <p class="prompt-kicker">Your week, at a glance</p>
+              <h2 id="calendar-title">Day view</h2>
+              <p class="calendar-description">Personal, work, and Dynamack. Your Family calendar is not included.</p>
+            </div>
+            <button id="calendar-refresh" class="quiet-button" type="button">Refresh calendar</button>
+          </div>
+          <div id="calendar-days" class="calendar-days" role="tablist" aria-label="Choose a day"></div>
+          <div class="calendar-bottom-row">
+            <div id="calendar-filters" class="calendar-filters" role="group" aria-label="Filter calendars">
+              <button type="button" class="calendar-filter selected" data-source="all" aria-pressed="true">All</button>
+              <button type="button" class="calendar-filter" data-source="Personal" aria-pressed="false">Personal</button>
+              <button type="button" class="calendar-filter" data-source="Work" aria-pressed="false">Work</button>
+              <button type="button" class="calendar-filter" data-source="Dynamack" aria-pressed="false">Dynamack</button>
+            </div>
+            <p id="calendar-status" class="calendar-status" role="status" aria-live="polite">Loading your calendars…</p>
+          </div>
+          <div id="calendar-events" class="calendar-events" aria-live="polite"></div>
         </section>
 
         <figure class="lofi-scene">
@@ -274,6 +296,6 @@
       </div>
     </dialog>
 
-    <script type="module" src="./app.js?v=13"></script>
+    <script type="module" src="./app.js?v=14"></script>
   </body>
 </html>

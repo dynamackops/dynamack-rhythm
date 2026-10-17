@@ -5,3 +5,4 @@ export const RHYTHM_CONVERSATION_URL = 'https://jagama.app.n8n.cloud/webhook/rhy
 export const RHYTHM_LEARNING_URL = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/learn';
 
 export const RHYTHM_RECEIPT_IMPORT_URL = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/aldi-receipt-preview';
+export const RHYTHM_CALENDAR_AGENDA_URL = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/calendar-agenda';
