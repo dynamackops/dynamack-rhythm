@@ -151,3 +151,10 @@ Supabase publishable keys and browser endpoints are designed to appear in fronte
 ## Current scope
 
 AI is constrained to the places where judgment helps. Deterministic routing, validation, monotonic ease levels, patch limits, and persistence remain in n8n and Supabase.
+
+## Aldi receipt pantry import
+
+The receipt importer previews the latest matching Instacart Aldi receipt and lets you choose products before saving them to the pantry. The browser receives only parsed item names and categories; receipt email markup and prices stay in the n8n workflow.
+
+Before enabling the feature, review and apply `supabase/phase11_instacart_receipts.sql` to the Rhythm Supabase project, configure `RHYTHM_RECEIPT_IMPORT_URL` in `config.js`, and publish the owner-authenticated `Rhythm Agent — Aldi Receipt Preview` workflow in n8n. The workflow must remain restricted to the Rhythm owner and the receipt search should only process Instacart Aldi receipts. Do not put service-role credentials in browser config. Duplicate receipt references are ignored by the database function.
+
