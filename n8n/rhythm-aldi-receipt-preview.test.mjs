@@ -22,6 +22,24 @@ test('prefers the latest direct ALDI receipt and deduplicates item names', () =>
   assert.deepEqual(result.json.items.map(x => x.name), ['Apple', 'Chicken Breast']);
   assert.equal(result.json.items[0].category, 'fruit');
 });
+test('parses direct ALDI receipt from Gmail API base64url payload body', () => {
+  const gmailApiMessage = {
+    id: 'gmail-api-aldi',
+    internalDate: String(Date.parse('2026-10-11')),
+    payload: {
+      headers: [
+        { name: 'From', value: 'ALDI <orders@shop.aldi.us>' },
+        { name: 'Subject', value: 'ALDI order receipt' },
+      ],
+      mimeType: 'text/html',
+      body: { data: Buffer.from(directHtml).toString('base64url') },
+    },
+  };
+  const [result] = run([gmailApiMessage]);
+  assert.equal(result.json.source, 'aldi_email');
+  assert.equal(result.json.purchasedOn, '2026-10-11');
+  assert.equal(result.json.items.length, 2);
+});
 test('falls back to the latest Instacart Aldi receipt when no direct ALDI email exists', () => {
   const [result] = run([instacart('2026-10-10'), instacart('2026-10-17')]);
   assert.equal(result.json.source, 'instacart_aldi');
