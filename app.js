@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+import { installCosmoBridge } from './cosmo-bridge.js';
 import {
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY,
@@ -115,6 +116,7 @@ function setBusy(value, message = '') {
 function showAuth() {
   authView.hidden = false;
   dashboardView.hidden = true;
+  cosmoBridge.publish();
 }
 
 function showDashboard() {
@@ -512,6 +514,7 @@ async function requestMeals(effort, mealSlot = selectedMealSlot) {
 }
 
 function renderState() {
+  cosmoBridge.publish();
   nowContent.replaceChildren();
   nextContent.replaceChildren();
   laterContent.replaceChildren();
@@ -633,6 +636,29 @@ async function runAction(action, chunkId = null, extra = {}) {
     setBusy(false);
   }
 }
+
+const cosmoBridge = installCosmoBridge({
+  getSession: () => session,
+  getState: () => state,
+  refresh: async () => {
+    if (busy) throw new Error('Rhythm is finishing another update. Try again in a moment.');
+    setBusy(true);
+    try { state = await callRhythm('get_state'); renderState(); }
+    finally { setBusy(false); }
+  },
+  converse: async (message) => {
+    if (busy) throw new Error('Rhythm is finishing another update. Try again in a moment.');
+    setBusy(true, 'Cosmo is checking your daily rhythm…');
+    try {
+      const payload = await callPrivateWorkflow(RHYTHM_CONVERSATION_URL, { date: easternDate(), message });
+      if (payload.state) { state = payload.state; renderState(); }
+      const reply = payload.agent?.message || 'I kept your rhythm where it is.';
+      rhythmChatResponse.textContent = reply;
+      dashboardMessage.textContent = '';
+      return reply;
+    } finally { setBusy(false); }
+  },
+});
 
 promptPrimary.addEventListener('click', () => {
   const prompt = state?.transitionPrompt;
@@ -828,3 +854,4 @@ if (session) {
 window.setInterval(() => {
   if (session && !busy && document.visibilityState === 'visible') loadDashboard('Checking the rhythm…');
 }, 5 * 60 * 1000);
+
