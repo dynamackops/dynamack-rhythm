@@ -7,6 +7,7 @@ import {
   RHYTHM_CONVERSATION_URL,
   RHYTHM_LEARNING_URL,
   RHYTHM_RECEIPT_IMPORT_URL,
+  RHYTHM_CALENDAR_AGENDA_URL,
 } from './config.js';
 import { normalizeReceiptItems } from './receipt-items.mjs';
 
@@ -73,6 +74,13 @@ const rhythmChatResponse = document.querySelector('#rhythm-chat-response');
 const learningButton = document.querySelector('#learning-button');
 const learningResults = document.querySelector('#learning-results');
 const receiptImportButton = document.querySelector('#receipt-import-button');
+const calendarDays = document.querySelector('#calendar-days');
+const calendarEvents = document.querySelector('#calendar-events');
+const calendarStatus = document.querySelector('#calendar-status');
+const calendarRefresh = document.querySelector('#calendar-refresh');
+let agendaEvents = [];
+let selectedCalendarDate = easternDate();
+let selectedCalendarSource = 'all';
 const receiptDialog = document.querySelector('#receipt-dialog');
 const receiptCloseButton = document.querySelector('#receipt-close-button');
 const receiptRefreshButton = document.querySelector('#receipt-refresh-button');
@@ -169,6 +177,113 @@ async function callPrivateWorkflow(url, body) {
     throw new Error(payload?.message || payload?.error || `Rhythm request failed (${response.status}).`);
   }
   return payload;
+}
+
+function dateInNewYork(date) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(date);
+}
+
+function zonedMidnight(dateKey) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const target = Date.UTC(year, month - 1, day);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  });
+  let guess = target;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = Object.fromEntries(formatter.formatToParts(new Date(guess)).map((part) => [part.type, part.value]));
+    const represented = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+    guess += target - represented;
+  }
+  return new Date(guess).toISOString();
+}
+
+function nextDateKey(dateKey) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+}
+
+function eventDateKey(event) {
+  if (event.allDay && /^\d{4}-\d{2}-\d{2}$/.test(event.start)) return event.start;
+  return dateInNewYork(new Date(event.start));
+}
+
+function renderCalendarDays() {
+  calendarDays.replaceChildren();
+  const today = easternDate();
+  let dateKey = today;
+  for (let offset = 0; offset < 7; offset += 1) {
+    const date = new Date(`${dateKey}T12:00:00Z`);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `calendar-day${dateKey === selectedCalendarDate ? ' selected' : ''}`;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', String(dateKey === selectedCalendarDate));
+    button.innerHTML = `<span>${offset === 0 ? 'Today' : new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/New_York' }).format(date)}</span><strong>${new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'America/New_York' }).format(date)}</strong>`;
+    button.addEventListener('click', () => { selectedCalendarDate = dateKey; renderCalendarDays(); renderCalendarEvents(); });
+    calendarDays.append(button);
+    dateKey = nextDateKey(dateKey);
+  }
+}
+
+function renderCalendarEvents() {
+  calendarEvents.replaceChildren();
+  const dayEvents = agendaEvents.filter((event) => eventDateKey(event) === selectedCalendarDate
+    && (selectedCalendarSource === 'all' || event.source === selectedCalendarSource));
+  if (!dayEvents.length) {
+    const empty = document.createElement('p');
+    empty.className = 'calendar-empty';
+    empty.textContent = 'Nothing scheduled here. A little open space is good, too.';
+    calendarEvents.append(empty);
+    return;
+  }
+  dayEvents.sort((a, b) => String(a.start).localeCompare(String(b.start)));
+  dayEvents.forEach((event) => {
+    const row = document.createElement('article');
+    row.className = `calendar-event calendar-source-${String(event.source).toLowerCase()}`;
+    const time = document.createElement('time');
+    if (event.allDay) time.textContent = 'All day';
+    else time.textContent = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }).format(new Date(event.start));
+    const title = document.createElement('strong');
+    title.textContent = event.title || 'Untitled event';
+    const meta = document.createElement('span');
+    meta.textContent = `${event.source}${event.isWorkout ? ' · Movement' : ''}`;
+    row.append(time, title, meta);
+    calendarEvents.append(row);
+  });
+}
+
+async function loadCalendarAgenda() {
+  if (!session) return;
+  calendarStatus.textContent = 'Loading your calendars…';
+  calendarRefresh.disabled = true;
+  const start = easternDate();
+  let end = start;
+  for (let offset = 0; offset < 7; offset += 1) end = nextDateKey(end);
+  try {
+    const payload = await callPrivateWorkflow(RHYTHM_CALENDAR_AGENDA_URL, {
+      start: zonedMidnight(start), end: zonedMidnight(end), timeZone: 'America/New_York',
+    });
+    agendaEvents = Array.isArray(payload.events) ? payload.events : [];
+    selectedCalendarDate = start;
+    renderCalendarDays();
+    renderCalendarEvents();
+    calendarStatus.textContent = 'Updated just now';
+  } catch (error) {
+    console.error(error);
+    calendarStatus.textContent = error.message || 'Calendar could not load. Your Rhythm dashboard is still available.';
+    if (!agendaEvents.length) {
+      const empty = document.createElement('p');
+      empty.className = 'calendar-empty';
+      empty.textContent = 'Try refreshing the calendar in a moment.';
+      calendarEvents.replaceChildren(empty);
+    }
+  } finally {
+    calendarRefresh.disabled = false;
+  }
 }
 
 function renderLearning(learning) {
@@ -613,6 +728,7 @@ async function loadDashboard(message = 'Making today visible…') {
     dashboardMessage.textContent = error.message || 'Rhythm could not load yet.';
   } finally {
     setBusy(false);
+    void loadCalendarAgenda();
   }
 }
 
@@ -922,6 +1038,18 @@ loginForm.addEventListener('submit', async (event) => {
 });
 
 refreshButton.addEventListener('click', () => loadDashboard('Refreshing your rhythm…'));
+calendarRefresh.addEventListener('click', () => loadCalendarAgenda());
+document.querySelectorAll('.calendar-filter').forEach((button) => {
+  button.addEventListener('click', () => {
+    selectedCalendarSource = button.dataset.source;
+    document.querySelectorAll('.calendar-filter').forEach((filter) => {
+      const selected = filter === button;
+      filter.classList.toggle('selected', selected);
+      filter.setAttribute('aria-pressed', String(selected));
+    });
+    renderCalendarEvents();
+  });
+});
 signoutButton.addEventListener('click', async () => {
   await supabase.auth.signOut();
   session = null;
