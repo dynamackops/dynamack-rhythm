@@ -739,6 +739,7 @@ function renderReceiptPreview() {
     select.addEventListener('change', () => {
       item.category = select.value;
       if (select.value !== 'other') checkbox.checked = true;
+      receiptSaveButton.disabled = !receiptItemsList.querySelector('input[type="checkbox"]:checked');
     });
     checkbox.addEventListener('change', () => {
       receiptSaveButton.disabled = !receiptItemsList.querySelector('input[type="checkbox"]:checked');
