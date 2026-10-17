@@ -7,7 +7,6 @@ import {
   RHYTHM_CONVERSATION_URL,
   RHYTHM_LEARNING_URL,
   RHYTHM_RECEIPT_IMPORT_URL,
-  RHYTHM_CALENDAR_AGENDA_URL,
 } from './config.js';
 import { normalizeReceiptItems } from './receipt-items.mjs';
 
@@ -264,7 +263,7 @@ async function loadCalendarAgenda() {
   let end = start;
   for (let offset = 0; offset < 7; offset += 1) end = nextDateKey(end);
   try {
-    const payload = await callPrivateWorkflow(RHYTHM_CALENDAR_AGENDA_URL, {
+    const payload = await callRhythm('get_calendar_agenda', null, {
       start: zonedMidnight(start), end: zonedMidnight(end), timeZone: 'America/New_York',
     });
     agendaEvents = Array.isArray(payload.events) ? payload.events : [];
