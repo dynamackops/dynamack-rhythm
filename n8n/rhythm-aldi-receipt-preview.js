@@ -19,13 +19,28 @@ function header(message, key) {
   const item = headers.find(h => String(h.name || '').toLowerCase() === key.toLowerCase());
   return String(item?.value || '');
 }
+function decodeBodyData(value) {
+  if (typeof value !== 'string' || !value) return '';
+  // Gmail API encodes MIME bodies as base64url in payload.body.data.
+  try {
+    const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+    return Buffer.from(normalized, 'base64').toString('utf8');
+  } catch {
+    return '';
+  }
+}
 function htmlBody(message) {
-  for (const candidate of [message.html, message.textAsHtml, message.textHtml, message.body?.html, message.payload?.body?.content]) {
+  for (const candidate of [message.html, message.textAsHtml, message.textHtml, message.body?.html,
+    message.payload?.body?.content, decodeBodyData(message.payload?.body?.data),
+    decodeBodyData(message.payload?.body?.base64_url_content)]) {
     if (typeof candidate === 'string' && /<html|<table|<div/i.test(candidate)) return candidate;
   }
   function findHtml(part) {
     if (!part) return '';
-    if (/text\/html/i.test(part.mimeType || part.mime_type || '') && typeof part.body?.content === 'string') return part.body.content;
+    if (/text\/html/i.test(part.mimeType || part.mime_type || '')) {
+      const body = part.body?.content || decodeBodyData(part.body?.data) || decodeBodyData(part.body?.base64_url_content);
+      if (typeof body === 'string' && body) return body;
+    }
     for (const child of part.parts || []) {
       const found = findHtml(child);
       if (found) return found;
