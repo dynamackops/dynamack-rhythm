@@ -39,6 +39,7 @@
             <button id="theme-button" class="theme-button" type="button">🎨 Theme</button>
             <button id="lofi-button" class="lofi-button" type="button" aria-pressed="false">🎧 Lo-fi</button>
             <button id="meal-help-button" class="meal-help-button" type="button">🍽️ What can I eat?</button>
+            <button id="receipt-import-button" class="meal-help-button" type="button">🛒 Import Aldi receipt</button>
             <button id="closeout-button" class="closeout-button" type="button" hidden>Close out the day</button>
             <button id="refresh-button" class="quiet-button" type="button">Refresh</button>
             <button id="signout-button" class="quiet-button" type="button">Sign out</button>
@@ -257,6 +258,22 @@
       </div>
     </dialog>
 
-    <script type="module" src="./app.js?v=12"></script>
+    <dialog id="receipt-dialog" class="receipt-dialog" aria-labelledby="receipt-title">
+      <div class="receipt-dialog-content">
+        <p class="prompt-kicker">Pantry import</p>
+        <h2 id="receipt-title">Bring in an Aldi receipt</h2>
+        <p>Review detected items before anything is added.</p>
+        <p id="receipt-meta" class="receipt-meta"></p>
+        <p id="receipt-status" class="receipt-status" role="status" aria-live="polite">Loading receipt preview…</p>
+        <div id="receipt-items" class="receipt-items"></div>
+        <div class="dialog-actions">
+          <button id="receipt-close-button" type="button" class="quiet-button">Close</button>
+          <button id="receipt-refresh-button" type="button" class="quiet-button">Refresh preview</button>
+          <button id="receipt-save-button" type="button" class="primary-button" disabled>Add selected to pantry</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="./app.js?v=13"></script>
   </body>
 </html>

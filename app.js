@@ -6,7 +6,9 @@ import {
   RHYTHM_ACTION_URL,
   RHYTHM_CONVERSATION_URL,
   RHYTHM_LEARNING_URL,
+  RHYTHM_RECEIPT_IMPORT_URL,
 } from './config.js';
+import { normalizeReceiptItems } from './receipt-items.mjs';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, detectSessionInUrl: true },
@@ -70,6 +72,16 @@ const rhythmChatInput = document.querySelector('#rhythm-chat-input');
 const rhythmChatResponse = document.querySelector('#rhythm-chat-response');
 const learningButton = document.querySelector('#learning-button');
 const learningResults = document.querySelector('#learning-results');
+const receiptImportButton = document.querySelector('#receipt-import-button');
+const receiptDialog = document.querySelector('#receipt-dialog');
+const receiptCloseButton = document.querySelector('#receipt-close-button');
+const receiptRefreshButton = document.querySelector('#receipt-refresh-button');
+const receiptSaveButton = document.querySelector('#receipt-save-button');
+const receiptStatus = document.querySelector('#receipt-status');
+const receiptMeta = document.querySelector('#receipt-meta');
+const receiptItemsList = document.querySelector('#receipt-items');
+let receiptPreview = null;
+let normalizedReceiptItems = [];
 
 let session = null;
 let state = null;
@@ -698,6 +710,89 @@ lofiButton.addEventListener('click', async () => {
     dashboardMessage.textContent = error.message || 'Lo-fi ambience could not start.';
   }
 });
+
+function renderReceiptPreview() {
+  receiptItemsList.replaceChildren();
+  receiptSaveButton.disabled = true;
+  if (!receiptPreview) return;
+  normalizedReceiptItems = normalizeReceiptItems(receiptPreview.items);
+  receiptMeta.textContent = 'Latest Instacart Aldi receipt' + (receiptPreview.purchasedOn ? ' · ' + receiptPreview.purchasedOn : '');
+  for (const item of normalizedReceiptItems) {
+    const row = document.createElement('label');
+    row.className = 'receipt-item-row';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = item.category !== 'other';
+    checkbox.dataset.itemKey = item.item_key;
+    const name = document.createElement('span');
+    name.className = 'receipt-item-name';
+    name.textContent = item.name;
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', 'Category for ' + item.name);
+    for (const category of ['protein','vegetable','fruit','breakfast','grain','drink','dessert','snack','other']) {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category[0].toUpperCase() + category.slice(1);
+      option.selected = item.category === category;
+      select.append(option);
+    }
+    select.addEventListener('change', () => {
+      item.category = select.value;
+      if (select.value !== 'other') checkbox.checked = true;
+    });
+    checkbox.addEventListener('change', () => {
+      receiptSaveButton.disabled = !receiptItemsList.querySelector('input[type="checkbox"]:checked');
+    });
+    row.append(checkbox, name, select);
+    receiptItemsList.append(row);
+  }
+  receiptSaveButton.disabled = !normalizedReceiptItems.some((item) => item.category !== 'other');
+}
+async function previewLatestReceipt() {
+  receiptStatus.textContent = 'Looking for your latest Instacart Aldi receipt…';
+  receiptItemsList.replaceChildren();
+  receiptMeta.textContent = '';
+  receiptPreview = null;
+  receiptSaveButton.disabled = true;
+  try {
+    const payload = await callPrivateWorkflow(RHYTHM_RECEIPT_IMPORT_URL, { action: 'preview_latest' });
+    if (!payload.messageId || !Array.isArray(payload.items)) throw new Error('The receipt preview was incomplete.');
+    receiptPreview = payload;
+    renderReceiptPreview();
+    receiptStatus.textContent = normalizedReceiptItems.length ? 'Review the items and select what you want added.' : 'No itemized products were found.';
+  } catch (error) {
+    receiptStatus.textContent = error.message || 'Could not load a receipt preview.';
+  }
+}
+receiptImportButton.addEventListener('click', () => {
+  receiptDialog.showModal();
+  previewLatestReceipt();
+});
+receiptCloseButton.addEventListener('click', () => receiptDialog.close());
+receiptRefreshButton.addEventListener('click', previewLatestReceipt);
+receiptSaveButton.addEventListener('click', async () => {
+  if (!receiptPreview) return;
+  const selected = [...receiptItemsList.querySelectorAll('input[type="checkbox"]:checked')]
+    .map((checkbox) => normalizedReceiptItems.find((item) => item.item_key === checkbox.dataset.itemKey))
+    .filter(Boolean);
+  if (!selected.length) return;
+  receiptSaveButton.disabled = true;
+  receiptStatus.textContent = 'Adding selected items to your pantry…';
+  try {
+    const { data, error } = await supabase.rpc('rhythm_import_grocery_receipt', {
+      p_source_reference: receiptPreview.messageId,
+      p_purchased_on: receiptPreview.purchasedOn || null,
+      p_items: selected,
+    });
+    if (error) throw error;
+    receiptStatus.textContent = data?.alreadyImported ? 'This receipt was already imported.' : 'Selected items were added to your pantry.';
+    if (!data?.alreadyImported) await loadDashboard();
+  } catch (error) {
+    receiptStatus.textContent = error.message || 'Could not save these pantry items.';
+    receiptSaveButton.disabled = false;
+  }
+});
+
 mealHelpButton.addEventListener('click', () => {
   mealDialog.showModal();
   selectMealSlot(defaultMealSlot());

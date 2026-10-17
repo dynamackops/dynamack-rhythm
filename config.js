@@ -3,3 +3,5 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_W3fHvjNDTntb2xKKWivBQg_9
 export const RHYTHM_ACTION_URL = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/action';
 export const RHYTHM_CONVERSATION_URL = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/conversation';
 export const RHYTHM_LEARNING_URL = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/learn';
+
+export const RHYTHM_RECEIPT_IMPORT_URL = 'https://jagama.app.n8n.cloud/webhook/rhythm-agent/aldi-receipt-preview';
