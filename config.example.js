@@ -7,4 +7,3 @@ export const RHYTHM_CONVERSATION_URL = 'https://YOUR_N8N_HOST/webhook/rhythm-age
 export const RHYTHM_LEARNING_URL = 'https://YOUR_N8N_HOST/webhook/rhythm-agent/learn';
 
 export const RHYTHM_RECEIPT_IMPORT_URL = 'https://YOUR_N8N_HOST/webhook/rhythm-agent/aldi-receipt-preview';
-export const RHYTHM_CALENDAR_AGENDA_URL = 'https://YOUR_N8N_HOST/webhook/rhythm-agent/calendar-agenda';
